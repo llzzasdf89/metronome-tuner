@@ -10,8 +10,8 @@
       </v-card>
       <v-list shaped two-line>
         <v-list-item-group>
-        <v-list-item @click="switchPage('Metronome')">Metronome</v-list-item>
-        <v-list-item @click="switchPage('GuitarTuner')">Guitar Tuner</v-list-item>
+        <v-list-item @click="switchComponent('Metronome')">Metronome</v-list-item>
+        <v-list-item @click="switchComponent('GuitarTuner')">Guitar Tuner</v-list-item>
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
@@ -51,7 +51,7 @@ export default {
     }
   },
   methods:{
-    switchPage:function(pageRoute) {
+    switchComponent:function(pageRoute) {
         this.$data.currentRoute = pageRoute
     }
   }
