@@ -1,11 +1,8 @@
 <template>
-<div>
-    111
-    
-</div>    
+  <div>GuitarTuner</div>
 </template>
 <script>
 export default {
-    name:"GuitarTuner"
-}
+  name: "GuitarTuner",
+};
 </script>
