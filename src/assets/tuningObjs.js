@@ -1,6 +1,7 @@
-const  tunnings = [{
+const  tunningObjs = [{
     name:"Standard",
-    pitches:"E A D G B E"
+    pitches:"E A D G B E",
+    fileSrc:[require('./standard/E_6th.wav'),require('./standard/A_5th.wav'), require('./standard/D_4th.wav'),require('./standard/G_3th.wav'),require('./standard/B_2nd.wav'),require('./standard/E_1st.wav')]
 },
 {
     name:"Drop D",
@@ -37,4 +38,4 @@ const  tunnings = [{
 }
 
 ]
-export default tunnings
+export default tunningObjs
