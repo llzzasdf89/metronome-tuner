@@ -11,11 +11,11 @@
       class="guitar_layer-dialogue"
       :style="{'transform':'translateX(' + bubbleOffset + 'px' +')'}"
       >
-      <span>low</span>
+      <span>{{BubbleDisplay}}</span>
       </v-img>
         <span>
 
-          B<sub>4</sub>
+          {{noteDisplay}}<sub>{{noteDisplaySubscript}}</sub>
         </span>
       </v-col>
       <v-col cols="8" class="tuner-container-guitar">
@@ -89,7 +89,7 @@
   margin:auto; /** adjust the position of image to the center */
   position: absolute;
   bottom:50%;
-  left:51%;
+  left:49%;
   line-height:64px;
 }
 .tuner-container-guitar {
@@ -212,6 +212,7 @@
 <script>
 import TunningItem from "@/components/TunningItem";
 import tuningObjs from "@/assets/tuningObjs";
+import MIDImap from '@/assets/MIDItable';
 // eslint-disable-next-line no-unused-vars
 const SIXTH_STRING_INDEX  = 0,FIFTH_STRING_INDEX  = 1,FOURTH_STRING_INDEX = 2,THIRD_STRING_INDEX = 3,SECOND_STRING_INDEX = 4,FIRST_STRING_INDEX = 5
 const MIDDLE_A = 440
@@ -231,8 +232,12 @@ export default {
   },
   data: () => ({
     tuningObjs,
+    MIDImap,
     currentTuningIndex:0,
-    bubbleOffset:0
+    bubbleOffset:0,
+    noteDisplay:'E',
+    noteDisplaySubscript:4,
+    BubbleDisplay:""
   }),
   mounted(){
     const mediaDevicePromise = navigator.mediaDevices.getUserMedia({
@@ -252,8 +257,21 @@ export default {
       audioScriptProcessorNode.addEventListener('audioprocess',(event)=>{
           const pitchFrequency = detector(event.inputBuffer.getChannelData(0))
           if(typeof pitchFrequency === 'number' && pitchFrequency < 1400){
-              const cents = this.getCents(pitchFrequency)
-              this.$data.bubbleOffset = cents
+              const centsOffset = this.getCents(pitchFrequency);
+              const noteMIDI = this.getNoteMIDI(pitchFrequency);
+              const note = MIDImap.get(noteMIDI);
+              if(note !=undefined ) {
+                if(note.length === 2) {
+                this.$data.noteDisplay = note.charAt(0)
+                this.$data.noteDisplaySubscript = note.charAt(1)
+                }
+                else if(note.length === 3){
+                  this.$data.noteDisplay = note.substring(0,2);
+                  this.$data.noteDisplaySubscript = note.charAt(2)
+                }
+                }
+              centsOffset >0?this.$data.BubbleDisplay = "High":centsOffset ==0?this.$data.BubbleDisplay = "":this.$data.BubbleDisplay = "low";
+              this.$data.bubbleOffset = centsOffset
           }
       })
 
@@ -271,19 +289,19 @@ export default {
       audioplayer.load()
       audioplayer.play()
     },
-    getNote:function(frequency) {
+    getNoteMIDI:function(frequency) {
       /**
-       * Use 12 Equal Temperament to calculate out a note corrsponding to the frequency
+       * Use 12 Equal Temperament to calculate MIDI code of a note corrsponding to the frequency
        */
-      const note = 12 * Math.log2(frequency/MIDDLE_A)
-      return Math.round(note) + SEMITONE
+      const noteMIDI = 12 * Math.log2(frequency/MIDDLE_A)
+      return Math.round(noteMIDI) + SEMITONE
     },
     getStandardFrequency: function(note){
       return MIDDLE_A * Math.pow(2,(note-SEMITONE) / 12)
     },
     getCents: function(frequency) {
-      const note = this.getNote(frequency)
-      const standardFrequency = this.getStandardFrequency(note)
+      const noteMIDI = this.getNoteMIDI(frequency)
+      const standardFrequency = this.getStandardFrequency(noteMIDI)
       return Math.floor(1200 * Math.log2(frequency/standardFrequency))
     }
   }
