@@ -2,7 +2,7 @@
   <v-container class="ma-auto fill-height overflow-hidden tuner">
     <audio id="audioPlayer"></audio>
     <v-row class="tuner-container">
-      <v-col cols='8' class="tuner-container-guitar_layer">
+      <v-col class="tuner-container-guitar_layer">
           <hr/>
       <v-img
       src="@/assets/speech-bubble.png"
@@ -18,7 +18,7 @@
           {{noteDisplay}}<sub>{{noteDisplaySubscript}}</sub>
         </span>
       </v-col>
-      <v-col cols="8" class="tuner-container-guitar">
+      <v-col class="tuner-container-guitar">
         <v-img
           src="@/assets/guitar.png"
           width="568px"
@@ -26,28 +26,16 @@
           class="ma-auto guitar-animation overflow-visible"
         >
           <v-btn-toggle class="btn-toggle-layout guitar-button-animation" borderless background-color="transparent" >
-            <v-btn class="btn-toggle-4th-string headline" color="#e9e9e9" v-html="currentTuning.strings[2]" @click='playAudio(2)'>  </v-btn>
-            <v-btn class="btn-toggle-5th-string headline" color="#e9e9e9" v-html="currentTuning.strings[1]" @click='playAudio(1)'>  </v-btn>
-            <v-btn class="btn-toggle-6th-string headline" color="#e9e9e9" v-html="currentTuning.strings[0]" @click='playAudio(0)'>  </v-btn>
-            <v-btn class="btn-toggle-3rd-string headline" color="#e9e9e9" v-html="currentTuning.strings[3]" @click='playAudio(3)'>  </v-btn>
-            <v-btn class="btn-toggle-2nd-string headline" color="#e9e9e9" v-html="currentTuning.strings[4]" @click='playAudio(4)'>  </v-btn>
-            <v-btn class="btn-toggle-1st-string headline" color="#e9e9e9" v-html="currentTuning.strings[5]" @click='playAudio(5)'>  </v-btn>
+            <v-btn class="btn-toggle-4th-string headline" :color="BtnActiveArr[2]?btnActiveColor:btnNoActiveColor" v-html="currentTuning.strings[2]" @click='playAudio(2)'>  </v-btn>
+            <v-btn class="btn-toggle-5th-string headline" :color="BtnActiveArr[1]?btnActiveColor:btnNoActiveColor" v-html="currentTuning.strings[1]" @click='playAudio(1)'>  </v-btn>
+            <v-btn class="btn-toggle-6th-string headline" :color="BtnActiveArr[0]?btnActiveColor:btnNoActiveColor" v-html="currentTuning.strings[0]" @click='playAudio(0)'>  </v-btn>
+            <v-btn class="btn-toggle-3rd-string headline" :color="BtnActiveArr[3]?btnActiveColor:btnNoActiveColor" v-html="currentTuning.strings[3]" @click='playAudio(3)'>  </v-btn>
+            <v-btn class="btn-toggle-2nd-string headline" :color="BtnActiveArr[4]?btnActiveColor:btnNoActiveColor" v-html="currentTuning.strings[4]" @click='playAudio(4)'>  </v-btn>
+            <v-btn class="btn-toggle-1st-string headline" :color="BtnActiveArr[5]?btnActiveColor:btnNoActiveColor" v-html="currentTuning.strings[5]" @click='playAudio(5)'>  </v-btn>
           </v-btn-toggle>
         </v-img>
       </v-col>
-      <v-col cols ='4' class="justify-center flex-column d-flex tuner-container-tuninglist">
-        <v-card outlined>
-          <v-card-title> SELECT TUNING </v-card-title>
-          <v-list-item-group color="indigo" mandatory v-model = "currentTuningIndex">
-            <TunningItem
-              v-for="tuning in tuningObjs"
-              :key="tuning.name"
-              :TuningName="tuning.name"
-              :TuningString="tuning.strings.join(' ')"
-            />
-          </v-list-item-group>
-        </v-card>
-      </v-col>
+
     </v-row>
   </v-container>
 </template>
@@ -89,7 +77,7 @@
   margin:auto; /** adjust the position of image to the center */
   position: absolute;
   bottom:50%;
-  left:49%;
+  left:49.5%;
   line-height:64px;
 }
 .tuner-container-guitar {
@@ -210,19 +198,14 @@
 }
 </style>
 <script>
-import TunningItem from "@/components/TunningItem";
 import tuningObjs from "@/assets/tuningObjs";
 import MIDImap from '@/assets/MIDItable';
-// eslint-disable-next-line no-unused-vars
 const SIXTH_STRING_INDEX  = 0,FIFTH_STRING_INDEX  = 1,FOURTH_STRING_INDEX = 2,THIRD_STRING_INDEX = 3,SECOND_STRING_INDEX = 4,FIRST_STRING_INDEX = 5
 const MIDDLE_A = 440
 const SEMITONE = 69
 
 export default {
   name: "GuitarTuner",
-  components: {
-    TunningItem,
-  },
   computed:{
     currentTuning: function (){
       const currentTuningIndex = this.currentTuningIndex
@@ -237,47 +220,48 @@ export default {
     bubbleOffset:0,
     noteDisplay:'E',
     noteDisplaySubscript:4,
-    BubbleDisplay:""
+    BubbleDisplay:"",
+    btnNoActiveColor:"#e9e9e9",
+    btnActiveColor:"red",
+    BtnActiveArr:[false,false,false,false,false,false]
   }),
   mounted(){
     const mediaDevicePromise = navigator.mediaDevices.getUserMedia({
       audio:true
-    })
+    })// ask and get the microphone permission from user
     mediaDevicePromise.then((stream)=>{
       const audioContext = new AudioContext()
       const audioSourceNode = audioContext.createMediaStreamSource(stream)
-      const audioScriptProcessorNode = audioContext.createScriptProcessor(8192,1,1)
+      const audioScriptProcessorNode = audioContext.createScriptProcessor(4096,1,1)
       audioSourceNode.connect(audioScriptProcessorNode)
       audioScriptProcessorNode.connect(audioContext.destination)
       const pitchFinder = this.$pitchfinder
       const detector = pitchFinder.YIN({
         sampleRate:audioContext.sampleRate
       })
-      
+      setInterval(this.setBacktoInitalState,5000)//set up a timer, when exceeding this time, the tuner will adjust to its inital state
       audioScriptProcessorNode.addEventListener('audioprocess',(event)=>{
           const pitchFrequency = detector(event.inputBuffer.getChannelData(0))
           if(typeof pitchFrequency === 'number' && pitchFrequency < 1400){
-              const centsOffset = this.getCents(pitchFrequency);
-              const noteMIDI = this.getNoteMIDI(pitchFrequency);
-              const note = MIDImap.get(noteMIDI);
-              if(note !=undefined ) {
-                if(note.length === 2) {
-                this.$data.noteDisplay = note.charAt(0)
-                this.$data.noteDisplaySubscript = note.charAt(1)
-                }
-                else if(note.length === 3){
-                  this.$data.noteDisplay = note.substring(0,2);
-                  this.$data.noteDisplaySubscript = note.charAt(2)
-                }
-                }
-              centsOffset >0?this.$data.BubbleDisplay = "High":centsOffset ==0?this.$data.BubbleDisplay = "":this.$data.BubbleDisplay = "low";
-              this.$data.bubbleOffset = centsOffset
+            /**make sure the frequency detected is valid, because the pitch detection algorithm would return undefined if nothing dectected */
+             const note = this.mapFrequencytoNote(pitchFrequency)
+             const centsOffset = this.getCentsOffset(pitchFrequency);
+             this.displayNote(note)
+             this.controlBubble(centsOffset)
+             this.controlBtn(note)
           }
       })
 
     })
   },
   methods:{
+    setBacktoInitalState:function(){
+        this.$data.bubbleOffset = 0;
+        this.$data.BubbleDisplay = "";
+        this.$data.noteDisplaySubscript = "";
+        this.$data.noteDisplay = ""
+        this.$data.BtnActiveArr = [false,false,false,false,false,false]
+    },
     playAudio: function(stringIndex) {
       if(!Number.isInteger(stringIndex)) return console.err('The string Index is illegal')
       const audioplayer = this.$getAudioplayer()
@@ -299,10 +283,56 @@ export default {
     getStandardFrequency: function(note){
       return MIDDLE_A * Math.pow(2,(note-SEMITONE) / 12)
     },
-    getCents: function(frequency) {
+    getCentsOffset: function(frequency) {
       const noteMIDI = this.getNoteMIDI(frequency)
       const standardFrequency = this.getStandardFrequency(noteMIDI)
       return Math.floor(1200 * Math.log2(frequency/standardFrequency))
+    },
+    mapFrequencytoNote: function(frequency){
+       const noteMIDI = this.getNoteMIDI(frequency);
+       return MIDImap.get(noteMIDI);
+    },
+    displayNote(note){
+        if(note === undefined) return 
+      if(note.length === 2) {
+                this.$data.noteDisplay = note.charAt(0)
+                this.$data.noteDisplaySubscript = note.charAt(1)
+                }
+                else if(note.length === 3){
+                  this.$data.noteDisplay = note.substring(0,2);
+                  this.$data.noteDisplaySubscript = note.charAt(2)
+                }
+
+    },
+    controlBubble:function(centsOffset){
+      centsOffset >0?this.$data.BubbleDisplay = "High":centsOffset ==0?this.$data.BubbleDisplay = "":this.$data.BubbleDisplay = "low";
+      this.$data.bubbleOffset = centsOffset
+    },
+    controlBtn:function(note){
+      if (note === undefined) return 
+      const BtnActiveArr = this.$data.BtnActiveArr
+      switch(note) {
+        case "E2":
+        BtnActiveArr[SIXTH_STRING_INDEX] = true
+        break;
+        case "A2":
+        BtnActiveArr[FIFTH_STRING_INDEX] = true
+        break;
+        case "D3":
+        BtnActiveArr[FOURTH_STRING_INDEX] = true
+        break;
+        case "G3":
+        BtnActiveArr[THIRD_STRING_INDEX] = true;
+        break;
+        case "B3":
+        BtnActiveArr[SECOND_STRING_INDEX] = true;
+        break;
+        case "E4":
+        BtnActiveArr[FIRST_STRING_INDEX] = true;
+        break;
+        default : break;
+      }
+      this.$data.BtnActiveArr = BtnActiveArr;
     }
   }
 };
