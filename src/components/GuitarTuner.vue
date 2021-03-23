@@ -11,7 +11,11 @@
       class="guitar_layer-dialogue"
       :style="{'transform':'translateX(' + bubbleOffset + 'px' +')'}"
       >
-      <span>{{BubbleDisplay}}</span>
+      <div class="guitar_layer-dialogue-content">
+        {{BubbleDisplay}}
+        <br/>
+        {{bubbleOffset==0?"":bubbleOffset}}
+      </div>
       </v-img>
         <span>
 
@@ -79,6 +83,14 @@
   bottom:50%;
   left:49.5%;
   line-height:64px;
+}
+.guitar_layer-dialogue-content{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: normal;
 }
 .tuner-container-guitar {
   transform:translateY(30%)
@@ -218,8 +230,8 @@ export default {
     MIDImap,
     currentTuningIndex:0,
     bubbleOffset:0,
-    noteDisplay:'E',
-    noteDisplaySubscript:4,
+    noteDisplay:'',
+    noteDisplaySubscript:"",
     BubbleDisplay:"",
     btnNoActiveColor:"#e9e9e9",
     btnActiveColor:"red",
@@ -305,7 +317,8 @@ export default {
 
     },
     controlBubble:function(centsOffset){
-      centsOffset >0?this.$data.BubbleDisplay = "High":centsOffset ==0?this.$data.BubbleDisplay = "":this.$data.BubbleDisplay = "low";
+      const BubbleDisplay = centsOffset>0?"High":centsOffset ==0?"":"low"
+      this.$data.BubbleDisplay = BubbleDisplay
       this.$data.bubbleOffset = centsOffset
     },
     controlBtn:function(note){
