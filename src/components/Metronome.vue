@@ -17,7 +17,7 @@
           </v-fade-transition>
         </v-col>
         <v-col class="text-right">
-          <v-btn :color="sliderButtonColor" dark depressed fab @click="playsound">
+          <v-btn :color="sliderButtonColor" dark depressed fab @click="play">
             <v-icon large> {{isPlaying?'mdi-pause':'mdi-play'}} </v-icon>
           </v-btn>
         </v-col>
@@ -31,7 +31,7 @@
 
       <v-slider track-color="grey" 
       always-dirty 
-      min="0" 
+      min="20" 
       max="200" 
       v-model="bpmValue"
       :color="sliderButtonColor"
@@ -99,7 +99,8 @@
 </template>
 <script>
 import tempoObj from '@/assets/tempos.js'
-const audioCtx = new AudioContext();
+let audioCtx
+let interval
 export default {
   name: "Metronome",
   computed:{
@@ -119,6 +120,12 @@ export default {
             circleActiveArr[i] = false
           }
           return circleActiveArr
+      },
+      lengthofBeatPerSeconds:function(){
+          const bpm = this.bpmValue
+          const beatsPerSecond = bpm/60
+          const lengthofBeatPerSeconds = 1/beatsPerSecond
+          return lengthofBeatPerSeconds
       }
   },
   data:() => ({
@@ -126,9 +133,10 @@ export default {
       bpmValue:0,
       tempoObj,
       currentBeat:4,
+      currentNote:"quarter",
       musicNotes:{
           quarter:{
-              isActived:false
+              isActived:true //default setting
           },
           eighth:{
             isActived:false
@@ -141,21 +149,27 @@ export default {
       beats:[1,2,3,4,5,6,7,8]
   }),
   methods:{
-      playsound:function (){
+      play:function(){
         this.isPlaying = !this.isPlaying
-        if(!this.isPlaying) return
+        if(!this.isPlaying) {
+          clearInterval(interval)
+          interval = undefined
+          audioCtx.close()
+          audioCtx = undefined
+          return 
+          }
+        if(!audioCtx) audioCtx = new AudioContext()
+        // const beat = this.currentBeat
+        // const note = this.currentNote
+        this.playsound(this.lengthofBeatPerSeconds)
+        if(!interval) interval = setInterval(()=>this.playsound(this.lengthofBeatPerSeconds), this.lengthofBeatPerSeconds * 1000)
+      },
+      playsound:function (lengthofBeatPerSeconds){
         const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination)
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(220, audioCtx.currentTime)
-        oscillator.frequency.linearRampToValueAtTime(50,audioCtx.currentTime + 0.1)
-        gainNode.gain.setValueAtTime(0,audioCtx.currentTime)
-        gainNode.gain.linearRampToValueAtTime(1,audioCtx.currentTime + 0.01)
-        gainNode.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime + 0.5)
-        oscillator.start(audioCtx.currentTime)
-        oscillator.stop(audioCtx.currentTime + 0.5)
+        oscillator.frequency.value = 800
+        oscillator.connect(audioCtx.destination)
+        oscillator.start()
+        oscillator.stop(audioCtx.currentTime + lengthofBeatPerSeconds)
       },
       decrementBPMvalue:function(){
           this.$data.bpmValue --
@@ -175,6 +189,7 @@ export default {
             }
             if(isCurrentNoteActived) return
             musicNotes[musicNote].isActived = true
+            this.$data.currentNote = musicNote
             this.$data.musicNotes = musicNotes
         }
   }
