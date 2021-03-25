@@ -17,16 +17,15 @@
           </v-fade-transition>
         </v-col>
         <v-col class="text-right">
-          <v-btn :color="sliderButtonColor" dark depressed fab @click="isPlaying=!isPlaying">
+          <v-btn :color="sliderButtonColor" dark depressed fab @click="playsound">
             <v-icon large> {{isPlaying?'mdi-pause':'mdi-play'}} </v-icon>
           </v-btn>
         </v-col>
       </v-row>
         <v-row class="flex-column mb-2">
-            <v-col class="title text-center">Largo</v-col>
+            <v-col class="title text-center">{{tempoName}}</v-col>
             <v-col class="text-center">
-                <v-icon>mdi-circle-outline</v-icon>
-                <v-icon>mdi-circle</v-icon>
+                <v-icon v-for="n in currentBeat" :key="n" >{{circleActiveArr[n-1]?'mdi-circle':'mdi-circle-outline'}}</v-icon>
                 </v-col>
         </v-row>
 
@@ -66,6 +65,7 @@
           single-line
           color="black"
           item-color="black"
+          v-model="currentBeat"
         ></v-select>
       </v-col>
     </v-row>
@@ -98,7 +98,8 @@
 
 </template>
 <script>
-
+import tempoObj from '@/assets/tempos.js'
+const audioCtx = new AudioContext();
 export default {
   name: "Metronome",
   computed:{
@@ -108,11 +109,23 @@ export default {
             if (this.bpmValue < 100) return 'green'
             if (this.bpmValue < 200) return 'orange'
             return 'red'
+      },
+      tempoName: function (){
+        return this.tempoObj.mapBpmToName(this.$data.bpmValue)
+      },
+      circleActiveArr:function(){
+          const circleActiveArr = []
+          for(let i = 0; i< this.currentBeat;i++){
+            circleActiveArr[i] = false
+          }
+          return circleActiveArr
       }
   },
   data:() => ({
       isPlaying:false,
       bpmValue:0,
+      tempoObj,
+      currentBeat:4,
       musicNotes:{
           quarter:{
               isActived:false
@@ -128,6 +141,22 @@ export default {
       beats:[1,2,3,4,5,6,7,8]
   }),
   methods:{
+      playsound:function (){
+        this.isPlaying = !this.isPlaying
+        if(!this.isPlaying) return
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination)
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(220, audioCtx.currentTime)
+        oscillator.frequency.linearRampToValueAtTime(50,audioCtx.currentTime + 0.1)
+        gainNode.gain.setValueAtTime(0,audioCtx.currentTime)
+        gainNode.gain.linearRampToValueAtTime(1,audioCtx.currentTime + 0.01)
+        gainNode.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime + 0.5)
+        oscillator.start(audioCtx.currentTime)
+        oscillator.stop(audioCtx.currentTime + 0.5)
+      },
       decrementBPMvalue:function(){
           this.$data.bpmValue --
       },
