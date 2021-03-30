@@ -53,19 +53,19 @@
     <v-row align="center">
       <v-col cols="6">
         <span class="subheading font-weight-light mr-1">
-            Beats
+            Time Signature
         </span>
       </v-col>
 
       <v-col cols="6">
         <v-select
           label="Select"
-          :items="beats"
+          :items="timeSignatureArr"
           persistent-hint
           single-line
           color="black"
           item-color="black"
-          v-model="beatNum"
+          v-model="timeSignature"
         ></v-select>
       </v-col>
     </v-row>
@@ -73,15 +73,15 @@
   <v-container fluid>
       <v-row>
           <v-col class="text-center">
-            <v-icon :color="musicNotes.quarter.isActived?'red':'black'" @click="activeMusicNote('quarter')">mdi-music-note-quarter</v-icon>
+            <v-icon :color="musicNotes[0].isActived?'red':'black'" @click="activeMusicNote('quarter')">mdi-music-note-quarter</v-icon>
 
           </v-col>
           <v-col class="text-center">
-            <v-icon :color="musicNotes. eighth.isActived?'red':'black'" @click="activeMusicNote('eighth')">mdi-music-note-eighth</v-icon>
+            <v-icon :color="musicNotes[1].isActived?'red':'black'" @click="activeMusicNote('eighth')">mdi-music-note-eighth</v-icon>
 
           </v-col>
           <v-col class="text-center">
-        <v-icon :color="musicNotes.sixteenth.isActived?'red':'black'" @click="activeMusicNote('sixteenth')">mdi-music-note-sixteenth</v-icon>
+        <v-icon :color="musicNotes[2].isActived?'red':'black'" @click="activeMusicNote('sixteenth')">mdi-music-note-sixteenth</v-icon>
           </v-col>
       </v-row>
   </v-container>
@@ -109,10 +109,10 @@ export default {
   computed:{
       sliderButtonColor:function(){
           if (this.bpmValue < 25) return 'indigo'
-            if (this.bpmValue < 50) return 'teal'
-            if (this.bpmValue < 100) return 'green'
-            if (this.bpmValue < 200) return 'orange'
-            return 'red'
+          if (this.bpmValue < 50) return 'teal'
+          if (this.bpmValue < 100) return 'green'
+          if (this.bpmValue < 200) return 'orange'
+          return 'red'
       },
       tempoName: function (){
         return this.tempoObj.mapBpmToName(this.$data.bpmValue)
@@ -132,9 +132,11 @@ export default {
       tempoObj,
       taptempo,
       tapBPM:0,
-      beatNum:4,
       currentBeat:0,
+      noteNum:4,
+      beatNum:4,
       currentNote:"quarter",
+      timeSignature:"4/4",
       circleObj:[{
         id:0,
         isActive:false
@@ -148,23 +150,33 @@ export default {
         id:3,
         isActive:false
       }],
-      musicNotes:{
-          quarter:{
-              isActived:true //default setting
+      musicNotes:[
+            {
+              name:"quarter",
+              isActived:true, //default setting
+              correspondingNum:4
           },
-          eighth:{
-            isActived:false
+          {
+              name:"eighth",
+            isActived:false,
+            correspondingNum:8
         },
-        sixteenth:{
-            isActived:false
+        {
+            name:"sixteenth",
+            isActived:false,
+            correspondingNum:16
         }
-        }
+      ]
       ,
-      beats:[1,2,3,4,5,6,7,8]
+      timeSignatureArr:['1/4','2/4','3/4','4/4','3/8','6/8']
   }),
   watch:{
-    beatNum:function(newValue){
-        const beatNum= newValue
+    timeSignature:function(newSignature){
+        const signatureCompound = newSignature.split('/')
+        const beatNum = signatureCompound[0]
+        const noteNum = signatureCompound[1]
+        this.noteNum = noteNum
+        this.beatNum = beatNum
         const circleObj = []
         for (let i = 0; i<beatNum;i++){
             circleObj[i] = {
@@ -231,25 +243,20 @@ export default {
         this.circleObj[this.currentBeat].isActive = true
       },
       decrementBPMvalue:function(){
-          this.$data.bpmValue --
+          this.bpmValue --
       },
         incrementBPMvalue:function(){
-        this.$data.bpmValue ++
+        this.bpmValue ++
         },
         activeMusicNote:function(musicNote){
-            const musicNotes = this.$data.musicNotes
-            let isCurrentNoteActived = false
-            for(let key in musicNotes){
-                if(musicNotes[key].isActived && key === musicNote) {
-                    isCurrentNoteActived = true
-                    break;
-                    }
-                musicNotes[key].isActived = false
+            for(let note of this.musicNotes){
+                if(note.name === musicNote) {
+                  note.isActived = true
+                  continue
+                  }
+                note.isActived = false
             }
-            if(isCurrentNoteActived) return
-            musicNotes[musicNote].isActived = true
-            this.$data.currentNote = musicNote
-            this.$data.musicNotes = musicNotes
+            this.currentNote = musicNote
         }
   }
 };
