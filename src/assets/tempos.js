@@ -61,7 +61,7 @@ const tempos = {
         this.notesInQueue.push({note:beatNumber,time})
         const osc = this.audioCtx.createOscillator();
         const envelope = this.audioCtx.createGain()
-        osc.frequency.value = (beatNumber % this.beatNum ==0)?1000:800
+        osc.frequency.value = (beatNumber % this.beatNum ==0)?1000:800 //stress the first beat
         envelope.gain.value = 1
         envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
         envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02);

@@ -177,8 +177,8 @@ export default {
           this.tempoObj.intervalID = null
           this.tempoObj.audioCtx.close()
           this.tempoObj.audioCtx = null
-          this.currentBeat = 0
-          for(let i =0;i<this.beatNum;i++) this.circleObj[i].isActive = false
+          this.tempoObj.currentBeat = 0
+          for(let i =0;i<this.tempoObj.beatNum;i++) this.tempoObj.circleObj[i].isActive = false
       },
       decrementBPMvalue:function(){
           --this.tempoObj.bpmValue
