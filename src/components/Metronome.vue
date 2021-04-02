@@ -25,7 +25,7 @@
         <v-row class="flex-column mb-2">
             <v-col class="title text-center">{{tempoName}}</v-col>
             <v-col class="text-center">
-                <v-icon v-for="circle in circleObj" :key="circle.id" >{{circle.isActive?'mdi-circle':'mdi-circle-outline'}}</v-icon>
+                <v-icon v-for="circle in tempoObj.circleObj" :key="circle.id" >{{circle.isActive?'mdi-circle':'mdi-circle-outline'}}</v-icon>
                 </v-col>
         </v-row>
 
@@ -111,30 +111,15 @@ export default {
           return 'red'
       },
       tempoName: function (){
-        return this.tempoObj.mapBpmToName(this.$data.bpmValue)
+        return this.tempoObj.mapBpmToName(this.tempoObj.bpmValue)
       }
   },
   data:() => ({
       isPlaying:false,
       tempoObj,
       taptempo,
-      noteNum:4,
-      beatNum:4,
       currentNote:"quarter",
       timeSignature:"4/4",
-      circleObj:[{
-        id:0,
-        isActive:false
-      },{
-        id:1,
-        isActive:false
-      },{
-        id:2,
-        isActive:false
-      },{
-        id:3,
-        isActive:false
-      }],
       musicNotes:[
             {
               name:"quarter",
@@ -158,18 +143,17 @@ export default {
   watch:{
     timeSignature:function(newSignature){
         const signatureCompound = newSignature.split('/')
-        const beatNum = signatureCompound[0]
-        const noteNum = signatureCompound[1]
-        this.noteNum = noteNum
-        this.beatNum = beatNum
+        this.tempoObj.beatNum = parseInt(signatureCompound[0])
+        this.tempoObj.noteNum = parseInt(signatureCompound[1])
+        this.tempoObj.currentBeat = 0
         const circleObj = []
-        for (let i = 0; i<beatNum;i++){
+        for (let i = 0; i<this.tempoObj.beatNum;i++){
             circleObj[i] = {
               isActive:false,
               id:i
             }
         }
-        return this.circleObj = circleObj
+        return this.tempoObj.circleObj = circleObj
       }
   },
   methods:{
@@ -200,7 +184,7 @@ export default {
           --this.tempoObj.bpmValue
       },
         incrementBPMvalue:function(){
-        ++ this.tempoObj.bpmValue
+          ++this.tempoObj.bpmValue
         },
         activeMusicNote:function(musicNote){
             for(let note of this.musicNotes){
