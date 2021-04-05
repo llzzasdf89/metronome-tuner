@@ -7,8 +7,27 @@ const tempos = {
     bpmValue:0,
     currentBeat:0,
     intervalID:null,
-    noteNum:4,
-    beatNum:4,
+    lowerNumeral:4,
+    upperNumeral:4,
+    currentNote:"quarter",
+    hitTime:0,
+    musicNotes:[
+        {
+          name:"quarter",
+          isActived:true, //default setting
+          correspondingNum:4
+      },
+      {
+          name:"eighth",
+        isActived:false,
+        correspondingNum:8
+    },
+    {
+        name:"sixteenth",
+        isActived:false,
+        correspondingNum:16
+    }
+  ],
     circleObj:[{
         id:0,
         isActive:false
@@ -34,20 +53,19 @@ const tempos = {
                 if(tempo < 200) return 'Presto';
                 return "Prestissimo"
     },
-    mapBartoNote:function(bar,currentNote){
-        bar = parseInt(bar)
-        switch(bar){
+    mapLowerNumtobeatNum:function(){
+        switch(this.lowerNumeral){
             case 4: 
-            if(currentNote === "quarter") return  1
-            else if(currentNote === "eighth") return 1/2
+            if(this.currentNote === "quarter") return  1
+            else if(this.currentNote === "eighth") return 1/2
             else return 1/4
             case 8:
-                if(currentNote === "quarter") return 1/4
-                else if(currentNote === "eighth") return 1
+                if(this.currentNote === "quarter") return 2
+                else if(this.currentNote === "eighth") return 1
                 else return 1/2
             case 16:
-                if(currentNote === "quarter") return  1/4
-                else if(currentNote === "eighth") return 1/2
+                if(this.currentNote === "quarter") return  4
+                else if(this.currentNote === "eighth") return 1/2
                 else return 1    
         }
     },
@@ -61,23 +79,29 @@ const tempos = {
         this.notesInQueue.push({note:beatNumber,time})
         const osc = this.audioCtx.createOscillator();
         const envelope = this.audioCtx.createGain()
-        osc.frequency.value = (beatNumber % this.beatNum ==0)?1000:800 //stress the first beat
+        osc.frequency.value = (beatNumber % this.upperNumeral ==0)?1000:800 //stress the first beat
         envelope.gain.value = 1
         envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
         envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
         osc.connect(envelope);
         envelope.connect(this.audioCtx.destination);
         osc.start(time);
-        osc.stop(time + 0.03)
+        osc.stop(time + 0.03);
+        const beatNum = this.mapLowerNumtobeatNum()
+        this.hitTime += beatNum===2?1/2:beatNum ===4?1/4:beatNum
+        if(this.hitTime >1) this.hitTime = 1
     },
     nextNote:function()
     {
         // Advance current note and time by a quarter note (crotchet if you're posh)
         const secondsPerBeat = 60.0 / this.bpmValue; // Notice this picks up the CURRENT tempo value to calculate beat length.
-        this.nextNoteTime += secondsPerBeat; // Add beat length to last beat time
+        
+        //According to the time signature, calculate the next Note time
+        this.nextNoteTime += secondsPerBeat * this.mapLowerNumtobeatNum() // Add beat length to last beat time
         this.countBeat()
     },
     countBeat:function(){
+        if(this.hitTime !== 1) return
         //this function is used to control the display of circle and count the beat which is playing
         /**
          * Notice: The meaning of 'currentBeat' is used to tell user which beat he is currently in.
@@ -85,17 +109,17 @@ const tempos = {
          * For example, in the user interface, the first circle will turn black if currentBeat values 0.
          */
 
-        /**'beatNum' means how many beats per bar */
+        /**'upperNumeral' means how many beats per bar */
         //if there is only one beat in a bar, we need to control only 1 circle displaying
-        if(this.beatNum === 1) return this.circleObj[this.currentBeat].isActive = true
+        if(this.upperNumeral === 1) return this.circleObj[this.currentBeat].isActive = true
 
         if(this.currentBeat === 0){
-            this.circleObj[this.beatNum - 1].isActive = false 
+            this.circleObj[this.upperNumeral - 1].isActive = false 
             this.circleObj[this.currentBeat].isActive = true
             ++this.currentBeat
-            //if currentBeat is 0, then its previous beat should be beatNum - 1. switch it off.
+            //if currentBeat is 0, then its previous beat should be upperNumeral - 1. switch it off.
         } 
-        else if(this.currentBeat >= this.beatNum - 1){
+        else if(this.currentBeat >= this.upperNumeral - 1){
             this.circleObj[this.currentBeat-1].isActive = false
             this.circleObj[this.currentBeat].isActive = true
             this.currentBeat = 0
@@ -107,7 +131,7 @@ const tempos = {
             ++this.currentBeat
             //if currentBeat is not approaching boundary, then we directly + 1
         }
-
+        this.hitTime = 0
       },
 }
 export default tempos

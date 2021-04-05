@@ -72,16 +72,17 @@
   </v-container>
   <v-container fluid>
       <v-row>
+          <v-col cols="6" class="subheading font-weight-light mr-1">subdivision</v-col>
           <v-col class="text-center">
-            <v-icon :color="musicNotes[0].isActived?'red':'black'" @click="activeMusicNote('quarter')">mdi-music-note-quarter</v-icon>
+            <v-icon :color="tempoObj.musicNotes[0].isActived?'red':'black'" @click="activeMusicNote('quarter')">mdi-music-note-quarter</v-icon>
 
           </v-col>
           <v-col class="text-center">
-            <v-icon :color="musicNotes[1].isActived?'red':'black'" @click="activeMusicNote('eighth')">mdi-music-note-eighth</v-icon>
+            <v-icon :color="tempoObj.musicNotes[1].isActived?'red':'black'" @click="activeMusicNote('eighth')">mdi-music-note-eighth</v-icon>
 
           </v-col>
           <v-col class="text-center">
-        <v-icon :color="musicNotes[2].isActived?'red':'black'" @click="activeMusicNote('sixteenth')">mdi-music-note-sixteenth</v-icon>
+        <v-icon :color="tempoObj.musicNotes[2].isActived?'red':'black'" @click="activeMusicNote('sixteenth')">mdi-music-note-sixteenth</v-icon>
           </v-col>
       </v-row>
   </v-container>
@@ -120,34 +121,19 @@ export default {
       taptempo,
       currentNote:"quarter",
       timeSignature:"4/4",
-      musicNotes:[
-            {
-              name:"quarter",
-              isActived:true, //default setting
-              correspondingNum:4
-          },
-          {
-              name:"eighth",
-            isActived:false,
-            correspondingNum:8
-        },
-        {
-            name:"sixteenth",
-            isActived:false,
-            correspondingNum:16
-        }
-      ]
-      ,
       timeSignatureArr:['1/4','2/4','3/4','4/4','3/8','4/8','6/8','4/16']
   }),
   watch:{
     timeSignature:function(newSignature){
-        const signatureCompound = newSignature.split('/')
-        this.tempoObj.beatNum = parseInt(signatureCompound[0])
-        this.tempoObj.noteNum = parseInt(signatureCompound[1])
+      /**
+       * Watch user's choice in the interface, if any change is made, update the 'circle image' in the interface
+       */
+        const signatureComponent = newSignature.split('/')
+        this.tempoObj.upperNumeral = parseInt(signatureComponent[0])
+        this.tempoObj.lowerNumeral= parseInt(signatureComponent[1])
         this.tempoObj.currentBeat = 0
         const circleObj = []
-        for (let i = 0; i<this.tempoObj.beatNum;i++){
+        for (let i = 0; i<this.tempoObj.upperNumeral;i++){
             circleObj[i] = {
               isActive:false,
               id:i
@@ -187,14 +173,14 @@ export default {
           ++this.tempoObj.bpmValue
         },
         activeMusicNote:function(musicNote){
-            for(let note of this.musicNotes){
+            for(let note of this.tempoObj.musicNotes){
                 if(note.name === musicNote) {
                   note.isActived = true
                   continue
                   }
                 note.isActived = false
             }
-            this.currentNote = musicNote
+            this.tempoObj.currentNote = musicNote
         }
   }
 };
