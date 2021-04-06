@@ -57,16 +57,20 @@
         </span>
       </v-col>
 
-      <v-col cols="6">
+      <v-col cols="6" class="d-flex align-center">
         <v-select
-          label="Select"
-          :items="timeSignatureArr"
+          :items="upperNumeralArr"
           persistent-hint
           single-line
           color="black"
           item-color="black"
-          v-model="timeSignature"
+          v-model="upperNumeral"
         ></v-select>
+        <v-col>/</v-col>
+        <v-select :items="lowerNumeralArr" single-line color="black"
+          item-color="black"
+          v-model="lowerNumeral"
+          ></v-select>
       </v-col>
     </v-row>
   </v-container>
@@ -74,7 +78,7 @@
       <v-row>
           <v-col cols="6" class="subheading font-weight-light mr-1">subdivision</v-col>
           <v-col class="text-center">
-            <v-icon :color="tempoObj.musicNotes[0].isActived?'red':'black'" @click="activeMusicNote('quarter')">mdi-music-note-quarter</v-icon>
+            <v-icon :color="tempoObj.musicNotes[0].isActived?'red':'black'" @click="activeMusicNote('off')">off</v-icon>
 
           </v-col>
           <v-col class="text-center">
@@ -119,26 +123,26 @@ export default {
       isPlaying:false,
       tempoObj,
       taptempo,
-      currentNote:"quarter",
-      timeSignature:"4/4",
-      timeSignatureArr:['1/4','2/4','3/4','4/4','3/8','4/8','6/8','4/16']
+      upperNumeralArr:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+      lowerNumeralArr:[1,2,4,8,16],
+      upperNumeral:4,
+      lowerNumeral:4
   }),
   watch:{
-    timeSignature:function(newSignature){
+    upperNumeral:function(newUpperNumeral){
       /**
-       * Watch user's choice in the interface, if any change is made, update the 'circle image' in the interface
+       * supervise user's choice of beat numbers , if any change is made, update the 'circle image' in the interface
        */
-        const signatureComponent = newSignature.split('/')
-        this.tempoObj.upperNumeral = parseInt(signatureComponent[0])
-        this.tempoObj.lowerNumeral= parseInt(signatureComponent[1])
-        this.tempoObj.currentBeat = 0
         const circleObj = []
-        for (let i = 0; i<this.tempoObj.upperNumeral;i++){
+        for (let i = 0; i<newUpperNumeral;i++){
             circleObj[i] = {
               isActive:false,
               id:i
             }
         }
+        this.tempoObj.currentBeat = 0 //each time when number of beats is changed, modify current beat to the first beat
+        this.tempoObj.upperNumeral = newUpperNumeral
+        this.tempoObj.lowerNumeral = this.lowerNumeral
         return this.tempoObj.circleObj = circleObj
       }
   },
@@ -164,7 +168,7 @@ export default {
           this.tempoObj.audioCtx.close()
           this.tempoObj.audioCtx = null
           this.tempoObj.currentBeat = 0
-          for(let i =0;i<this.tempoObj.beatNum;i++) this.tempoObj.circleObj[i].isActive = false
+          for(let i =0;i<this.tempoObj.upperNumeral;i++) this.tempoObj.circleObj[i].isActive = false
       },
       decrementBPMvalue:function(){
           --this.tempoObj.bpmValue

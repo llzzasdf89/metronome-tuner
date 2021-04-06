@@ -9,14 +9,15 @@ const tempos = {
     intervalID:null,
     lowerNumeral:4,
     upperNumeral:4,
-    currentNote:"quarter",
+    currentNote:"off",
     hitTime:0,
     musicNotes:[
         {
-          name:"quarter",
-          isActived:true, //default setting
-          correspondingNum:4
-      },
+            name:"off",
+            isActived:true,
+            correspondingNum:0
+        }
+        ,
       {
           name:"eighth",
         isActived:false,
@@ -53,22 +54,12 @@ const tempos = {
                 if(tempo < 200) return 'Presto';
                 return "Prestissimo"
     },
-    mapLowerNumtobeatNum:function(){
-        switch(this.lowerNumeral){
-            case 4: 
-            if(this.currentNote === "quarter") return  1
+    subdivision:function(){
+            if(this.currentNote === "off") return  1
             else if(this.currentNote === "eighth") return 1/2
             else return 1/4
-            case 8:
-                if(this.currentNote === "quarter") return 2
-                else if(this.currentNote === "eighth") return 1
-                else return 1/2
-            case 16:
-                if(this.currentNote === "quarter") return  4
-                else if(this.currentNote === "eighth") return 1/2
-                else return 1    
         }
-    },
+    ,
     scheduler:function(){
         while(this.nextNoteTime < this.audioCtx.currentTime + this.scheduleAheadTime){
             this.scheduleNote(this.currentBeat,this.nextNoteTime)
@@ -87,17 +78,15 @@ const tempos = {
         envelope.connect(this.audioCtx.destination);
         osc.start(time);
         osc.stop(time + 0.03);
-        const beatNum = this.mapLowerNumtobeatNum()
-        this.hitTime += beatNum===2?1/2:beatNum ===4?1/4:beatNum
+        const beatNum = this.subdivision()
+        this.hitTime += beatNum
         if(this.hitTime >1) this.hitTime = 1
     },
     nextNote:function()
     {
-        // Advance current note and time by a quarter note (crotchet if you're posh)
         const secondsPerBeat = 60.0 / this.bpmValue; // Notice this picks up the CURRENT tempo value to calculate beat length.
-        
         //According to the time signature, calculate the next Note time
-        this.nextNoteTime += secondsPerBeat * this.mapLowerNumtobeatNum() // Add beat length to last beat time
+        this.nextNoteTime += secondsPerBeat * this.subdivision() 
         this.countBeat()
     },
     countBeat:function(){
