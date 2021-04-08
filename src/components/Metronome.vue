@@ -235,21 +235,29 @@ export default {
         countBeat()
     },
      scheduleNote:function(beatNumber, time){
-       const {audioCtx,getSubdivisionHitTime,upperNumeral} = this
+       const {audioCtx,getSubdivisionHitTime} = this
         this.notesInQueue.push({note:beatNumber,time})
         const osc = audioCtx.createOscillator()
         const envelope = audioCtx.createGain()
-        osc.frequency.value = (beatNumber % upperNumeral ==0)?1000:800 //stress the first beat
         envelope.gain.value = 1
         envelope.gain.exponentialRampToValueAtTime(1, time + 0.001)
         envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02)
+        /**
+         * Subdivision time is equal to lowerNum * noteCorrespondingNum
+         * For example, in time signature 4/4, a quarter's subdivision time is 4 * 1/4 = 1
+         * Our hitTime will be accmulated from 0 to 1 to record which subdivision beat it is in
+         * If its value is 1/2, then we are currently in the first of subdivision beat
+         * If its value is 1, then it shows our subdivision beat is done, go to next beat of current bar.
+         */
+         const SubdivisionHitTime = getSubdivisionHitTime()
+         osc.frequency.value = this.hitTime ===0?440:1000
+          this.hitTime += SubdivisionHitTime
+          if(this.hitTime >1) this.hitTime = 0
+          //in case user switches from small notes to large notes, for example 8th -> 4th
         osc.connect(envelope)
         envelope.connect(audioCtx.destination)
         osc.start(time)
         osc.stop(time + 0.03)
-        const beatNum = getSubdivisionHitTime()
-        this.hitTime += beatNum
-        if(this.hitTime >1) this.hitTime = 1
     },
     mapBpmToName:function(tempo = 40){
                 if(tempo < 24) return 'Larghissimo'
