@@ -5,7 +5,7 @@ import 'roboto-fontface/css/roboto/roboto-fontface.css'
 import '@mdi/font/css/materialdesignicons.css'
 import pitchfinder from 'pitchfinder'
 Vue.prototype.$getAudioplayer = function () {
-    return document.getElementById('audioPlayer')
+  return document.getElementById('audioPlayer')
 }
 Vue.prototype.$pitchfinder = pitchfinder
 Vue.config.productionTip = false
