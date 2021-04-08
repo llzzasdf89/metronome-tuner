@@ -112,8 +112,8 @@ export default {
       }
   },
   data:() => ({
-      isPlaying:false,// whether the player is working
       taptempo, //tapTempo feature objects, encapsulates all the functions related to tapTempo.
+      isPlaying:false,// whether the player is working
       upperNumeralArr:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],//User choose a upper numeral from this data container.
       lowerNumeralArr:[1,2,4,8],//User choose a lower numeral from this data container.
       notesInQueue:[],//Record each note to be played
@@ -184,7 +184,7 @@ export default {
       resetCircleObj:function(){
         const {upperNumeral} = this
         const circleObj = []
-        for (let i = 0; i<upperNumeral;i++){
+        for (let i = 0;i<upperNumeral;i++){
             circleObj[i] = {
               isActive:false,
               id:i
@@ -228,45 +228,45 @@ export default {
       },
        nextNote:function()
     {
-        const {bpmValue, subdivision, countBeat} = this
-        const secondsPerBeat = 60.0 / bpmValue; // Notice this picks up the CURRENT tempo value to calculate beat length.
+        const {bpmValue, getSubdivisionHitTime, countBeat} = this
+        const secondsPerBeat = 60.0 / bpmValue // Notice this picks up the CURRENT tempo value to calculate beat length.
         //According to the time signature, calculate the next Note time
-        this.nextNoteTime += secondsPerBeat * subdivision() 
+        this.nextNoteTime += secondsPerBeat * getSubdivisionHitTime() 
         countBeat()
     },
      scheduleNote:function(beatNumber, time){
-       const {audioCtx,subdivision,upperNumeral} = this
+       const {audioCtx,getSubdivisionHitTime,upperNumeral} = this
         this.notesInQueue.push({note:beatNumber,time})
-        const osc = audioCtx.createOscillator();
+        const osc = audioCtx.createOscillator()
         const envelope = audioCtx.createGain()
         osc.frequency.value = (beatNumber % upperNumeral ==0)?1000:800 //stress the first beat
         envelope.gain.value = 1
-        envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
-        envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
-        osc.connect(envelope);
-        envelope.connect(audioCtx.destination);
-        osc.start(time);
-        osc.stop(time + 0.03);
-        const beatNum = subdivision()
+        envelope.gain.exponentialRampToValueAtTime(1, time + 0.001)
+        envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02)
+        osc.connect(envelope)
+        envelope.connect(audioCtx.destination)
+        osc.start(time)
+        osc.stop(time + 0.03)
+        const beatNum = getSubdivisionHitTime()
         this.hitTime += beatNum
         if(this.hitTime >1) this.hitTime = 1
     },
     mapBpmToName:function(tempo = 40){
-                if(tempo < 24) return 'Larghissimo';
-                if(tempo <45) return 'Grave';
-                if(tempo <60) return 'Largo';
-                if(tempo < 66)return 'Larghetto';
-                if(tempo < 76)return 'Adagio';
-                if(tempo < 108)return 'Andante';
-                if(tempo < 120)return 'Moderato';
-                if(tempo < 156)return 'Allegro';
-                if(tempo < 200) return 'Presto';
+                if(tempo < 24) return 'Larghissimo'
+                if(tempo <45) return 'Grave'
+                if(tempo <60) return 'Largo'
+                if(tempo < 66)return 'Larghetto'
+                if(tempo < 76)return 'Adagio'
+                if(tempo < 108)return 'Andante'
+                if(tempo < 120)return 'Moderato'
+                if(tempo < 156)return 'Allegro'
+                if(tempo < 200) return 'Presto'
                 return "Prestissimo"
     },
-    subdivision:function(){
-            const {corespondingNum} = this.currentSubdivisionNote
+    getSubdivisionHitTime:function(){
+            const {correspondingNum} = this.currentSubdivisionNote
             const {lowerNumeral} = this
-            return corespondingNum * lowerNumeral
+            return correspondingNum * lowerNumeral
         }
     ,
     scheduler:function(){
@@ -276,10 +276,9 @@ export default {
         }
     },
       testBPM:function(){
-        const {tap,timesCache,calculateBPM} = this.taptempo
-        tap()
-        if(timesCache.length >= 2) {
-          const bpm = Math.round(calculateBPM())
+        this.taptempo.tap()
+        if(this.taptempo.timesCache.length >= 2) {
+          const bpm = Math.round(this.taptempo.calculateBPM())
           return this.bpmValue = bpm 
         }
       },
@@ -308,5 +307,5 @@ export default {
             }
         }
   }
-};
+}
 </script>
