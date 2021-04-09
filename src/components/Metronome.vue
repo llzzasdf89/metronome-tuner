@@ -324,6 +324,7 @@ export default {
       this.audioCtx.close();
       this.audioCtx = null;
       this.currentBeat = 0;
+      this.nextNoteTime = 0;
       this.resetCircleObj();
     },
     decrementBPMvalue: function () {
