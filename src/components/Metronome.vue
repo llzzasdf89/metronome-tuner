@@ -39,7 +39,7 @@
         track-color="grey"
         always-dirty
         min="20"
-        max="200"
+        max="300"
         v-model="bpmValue"
         :color="sliderButtonColor"
       >
@@ -132,6 +132,9 @@ export default {
       return this.mapBpmToName(this.bpmValue);
     },
   },
+beforeDestroy(){
+  this.stop() //if components(page) is switched, stop the audio and set back to initalState
+},
   data: () => ({
     taptempo, //tapTempo feature objects, encapsulates all the functions related to tapTempo.
     isPlaying: false, // whether the player is working

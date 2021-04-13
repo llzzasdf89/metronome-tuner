@@ -53,8 +53,8 @@ export default {
   },
   methods: {
     switchComponent: function (componentName) {
-      this.$data.currentRoute = componentName;
-      this.$data.toolBarTitle = componentName;
+      this.currentRoute = componentName;
+      this.toolBarTitle = componentName;
     },
   },
 };

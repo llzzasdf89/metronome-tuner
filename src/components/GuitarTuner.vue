@@ -2,7 +2,7 @@
   <v-container class="ma-auto fill-height overflow-hidden tuner">
     <audio id="audioPlayer"></audio>
     <v-row class="tuner-container">
-      <v-col class="tuner-container-guitar_layer">
+      <v-col class="tuner-container-guitar_layer" cols=8>
         <hr />
         <v-img
           src="@/assets/speech-bubble.png"
@@ -21,7 +21,7 @@
           {{ noteDisplay }}<sub>{{ noteDisplaySubscript }}</sub>
         </span>
       </v-col>
-      <v-col class="tuner-container-guitar">
+      <v-col  class="tuner-container-guitar" cols=8>
         <v-img
           src="@/assets/guitar.png"
           width="568px"
@@ -77,6 +77,26 @@
             </v-btn>
           </v-btn-toggle>
         </v-img>
+      </v-col>
+       <v-col  cols=4 align-self="center">
+         <v-card outlined>
+           <v-row>
+             <v-col cols=8 class="pa-5 v-card__title">
+               SELECT TUNING 
+             </v-col>
+             <v-col cols=4 class="d-flex justify-center">
+               <v-switch messages="auto" color="green" v-model="isAuto"></v-switch>
+             </v-col>
+           </v-row>
+          <v-list-item-group color="indigo" mandatory v-model = "currentTuningIndex">
+            <TuningItem
+              v-for="tuning in tuningObjs"
+              :key="tuning.name"
+              :TuningName="tuning.name"
+              :TuningString="tuning.strings.join(' ')"
+            />
+          </v-list-item-group>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
@@ -249,6 +269,7 @@
 <script>
 import tuningObjs from "@/assets/tuningObjs";
 import MIDImap from "@/assets/MIDItable";
+import TuningItem from "@/components/TuningItem";
 const SIXTH_STRING_INDEX = 0,
   FIFTH_STRING_INDEX = 1,
   FOURTH_STRING_INDEX = 2,
@@ -260,6 +281,9 @@ const SEMITONE = 69;
 
 export default {
   name: "GuitarTuner",
+  components:{
+    TuningItem
+  },
   computed: {
     currentTuning: function () {
       const currentTuningIndex = this.currentTuningIndex;
@@ -270,6 +294,7 @@ export default {
   data: () => ({
     tuningObjs,
     MIDImap,
+    isAuto:true,
     currentTuningIndex: 0,
     bubbleOffset: 0,
     noteDisplay: "",
@@ -313,11 +338,11 @@ export default {
   },
   methods: {
     setBacktoInitalState: function () {
-      this.$data.bubbleOffset = 0;
-      this.$data.BubbleDisplay = "";
-      this.$data.noteDisplaySubscript = "";
-      this.$data.noteDisplay = "";
-      this.$data.BtnActiveArr = [false, false, false, false, false, false];
+      this.bubbleOffset = 0;
+      this.BubbleDisplay = "";
+      this.noteDisplaySubscript = "";
+      this.noteDisplay = "";
+      this.BtnActiveArr = [false, false, false, false, false, false];
     },
     playAudio: function (stringIndex) {
       if (!Number.isInteger(stringIndex))
@@ -327,8 +352,7 @@ export default {
         console.error(
           "Get audioplayer error, please check whether your browser support this"
         );
-      const tuningObjs = this.tuningObjs;
-      const currentTuningIndex = this.currentTuningIndex;
+      const {tuningObjs,currentTuningIndex} = this
       const src = tuningObjs[currentTuningIndex].fileSrc[stringIndex];
       audioplayer.src = src;
       audioplayer.load();
@@ -356,45 +380,45 @@ export default {
     displayNote(note) {
       if (note === undefined) return;
       if (note.length === 2) {
-        this.$data.noteDisplay = note.charAt(0);
-        this.$data.noteDisplaySubscript = note.charAt(1);
+        this.noteDisplay = note.charAt(0);
+        this.noteDisplaySubscript = note.charAt(1);
       } else if (note.length === 3) {
-        this.$data.noteDisplay = note.substring(0, 2);
-        this.$data.noteDisplaySubscript = note.charAt(2);
+        this.noteDisplay = note.substring(0, 2);
+        this.noteDisplaySubscript = note.charAt(2);
       }
     },
     controlBubble: function (centsOffset) {
       const BubbleDisplay =
         centsOffset > 0 ? "High" : centsOffset == 0 ? "" : "low";
-      this.$data.BubbleDisplay = BubbleDisplay;
-      this.$data.bubbleOffset = centsOffset;
+      this.BubbleDisplay = BubbleDisplay;
+      this.bubbleOffset = centsOffset;
     },
     controlBtn: function (note) {
-      if (note === undefined) return;
-      const BtnActiveArr = this.$data.BtnActiveArr;
+      if (note === undefined || !this.isAuto) return;
+      const {BtnActiveArr} = this;
+      const {MIDI} = this.currentTuning
       switch (note) {
-        case "E2":
+        case MIDI[SIXTH_STRING_INDEX]:
           BtnActiveArr[SIXTH_STRING_INDEX] = true;
           break;
-        case "A2":
+        case MIDI[FIFTH_STRING_INDEX]:
           BtnActiveArr[FIFTH_STRING_INDEX] = true;
           break;
-        case "D3":
+        case MIDI[FOURTH_STRING_INDEX]:
           BtnActiveArr[FOURTH_STRING_INDEX] = true;
           break;
-        case "G3":
+        case MIDI[THIRD_STRING_INDEX]:
           BtnActiveArr[THIRD_STRING_INDEX] = true;
           break;
-        case "B3":
+        case MIDI[SECOND_STRING_INDEX]:
           BtnActiveArr[SECOND_STRING_INDEX] = true;
           break;
-        case "E4":
+        case MIDI[FIRST_STRING_INDEX]:
           BtnActiveArr[FIRST_STRING_INDEX] = true;
           break;
         default:
           break;
       }
-      this.$data.BtnActiveArr = BtnActiveArr;
     },
   },
 };
