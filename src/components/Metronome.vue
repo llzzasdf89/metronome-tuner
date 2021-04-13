@@ -324,10 +324,12 @@ beforeDestroy(){
     stop: function () {
       clearInterval(this.intervalID);
       this.intervalID = null;
-      this.audioCtx.close();
-      this.audioCtx = null;
       this.currentBeat = 0;
       this.nextNoteTime = 0;
+      if(this.audioCtx) {
+        this.audioCtx.close();
+        this.audioCtx = null;
+        }
       this.resetCircleObj();
     },
     decrementBPMvalue: function () {

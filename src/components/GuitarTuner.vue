@@ -2,19 +2,20 @@
   <v-container class="ma-auto fill-height overflow-hidden tuner">
     <audio id="audioPlayer"></audio>
     <v-row class="tuner-container">
-      <v-col class="tuner-container-guitar_layer" cols=8>
+      <v-col class="tuner-container-guitar_layer" cols=8 ref="layer">
         <hr />
         <v-img
           src="@/assets/speech-bubble.png"
           width="64px"
           height="64px"
           class="guitar_layer-dialogue"
-          :style="{ transform: 'translateX(' + bubbleOffset + 'px' + ')' }"
+          :style="{ transform: 'translateX(' + bubbleOffsetPercentage + '%'+')' }"
+          ref="bubble"
         >
           <div class="guitar_layer-dialogue-content">
             {{ BubbleDisplay }}
             <br />
-            {{ bubbleOffset == 0 ? "" : bubbleOffset }}
+            {{ bubbleOffsetPercentage == 0 ? "" : bubbleOffsetPercentage }}
           </div>
         </v-img>
         <span>
@@ -35,44 +36,50 @@
           >
             <v-btn
               class="btn-toggle-4th-string headline"
-              :color="BtnActiveArr[2] ? btnActiveColor : btnNoActiveColor"
+              :style="{background:BtnActiveArr[2]?btnActiveColor:btnNoActiveColor}"
               v-html="currentTuning.strings[2]"
-              @click="playAudio(2)"
+              @click="ManualControlBtn(2)"
+              :disabled="isAuto"
             >
             </v-btn>
             <v-btn
               class="btn-toggle-5th-string headline"
-              :color="BtnActiveArr[1] ? btnActiveColor : btnNoActiveColor"
+              :style="{background:BtnActiveArr[1]?btnActiveColor:btnNoActiveColor}"
               v-html="currentTuning.strings[1]"
-              @click="playAudio(1)"
+              @click="ManualControlBtn(1)"
+              :disabled="isAuto"
             >
             </v-btn>
             <v-btn
               class="btn-toggle-6th-string headline"
-              :color="BtnActiveArr[0] ? btnActiveColor : btnNoActiveColor"
+              :style="{background:BtnActiveArr[0]?btnActiveColor:btnNoActiveColor}"
               v-html="currentTuning.strings[0]"
-              @click="playAudio(0)"
+              @click="ManualControlBtn(0)"
+              :disabled="isAuto"
             >
             </v-btn>
             <v-btn
               class="btn-toggle-3rd-string headline"
-              :color="BtnActiveArr[3] ? btnActiveColor : btnNoActiveColor"
+              :style="{background:BtnActiveArr[3]?btnActiveColor:btnNoActiveColor}"
               v-html="currentTuning.strings[3]"
-              @click="playAudio(3)"
+              @click="ManualControlBtn(3)"
+              :disabled="isAuto"
             >
             </v-btn>
             <v-btn
               class="btn-toggle-2nd-string headline"
-              :color="BtnActiveArr[4] ? btnActiveColor : btnNoActiveColor"
+              :style="{background:BtnActiveArr[4]?btnActiveColor:btnNoActiveColor}"
               v-html="currentTuning.strings[4]"
-              @click="playAudio(4)"
+              @click="ManualControlBtn(4)"
+              :disabled="isAuto"
             >
             </v-btn>
             <v-btn
               class="btn-toggle-1st-string headline"
-              :color="BtnActiveArr[5] ? btnActiveColor : btnNoActiveColor"
+              :style="{background:BtnActiveArr[5]?btnActiveColor:btnNoActiveColor}"
               v-html="currentTuning.strings[5]"
-              @click="playAudio(5)"
+              @click="ManualControlBtn(5)"
+              :disabled="isAuto"
             >
             </v-btn>
           </v-btn-toggle>
@@ -149,10 +156,12 @@
 }
 .tuner-container-guitar {
   transform: translateY(30%);
+  z-index: 10000;
 }
 .guitar-animation {
   animation-duration: 2s;
   animation-name: slidein;
+  z-index: 1000;
 }
 .guitar-button-animation {
   animation-duration: 2s;
@@ -180,6 +189,7 @@
   height: 60%;
   position: relative;
   transition-delay: 2s;
+  z-index: -100000;
 }
 .btn-toggle-4th-string {
   position: absolute;
@@ -188,6 +198,7 @@
   border-radius: 100% !important;
   max-width: 48px;
   text-transform: none;
+  z-index: -1;
 }
 .btn-toggle-4th-string::before,
 .btn-toggle-5th-string::before,
@@ -198,6 +209,7 @@
   width: 92px;
   content: "";
   left: 48px;
+
   /* v-btn component has a default value of width, which is 48 px, for details please visit the documentaion  
     setting the 'left' property could adjust the position of the red line besides the button,which is the 'before' element,  be on the right side of that button
   */
@@ -214,6 +226,7 @@
   border-radius: 100% !important;
   max-width: 48px;
   text-transform: none;
+  z-index: -1;
 }
 .btn-toggle-6th-string {
   position: absolute;
@@ -222,6 +235,7 @@
   border-radius: 100% !important;
   max-width: 48px;
   text-transform: none;
+  z-index: -1;
 }
 .btn-toggle-3rd-string::before,
 .btn-toggle-2nd-string::before,
@@ -248,6 +262,7 @@
   border-radius: 100% !important;
   max-width: 48px;
   text-transform: none;
+  z-index: -1;
 }
 .btn-toggle-2nd-string {
   position: absolute;
@@ -256,6 +271,7 @@
   border-radius: 100% !important;
   max-width: 48px;
   text-transform: none;
+  z-index: -1;
 }
 .btn-toggle-1st-string {
   position: absolute;
@@ -264,6 +280,7 @@
   border-radius: 100% !important;
   max-width: 48px;
   text-transform: none;
+  z-index: -1;
 }
 </style>
 <script>
@@ -293,21 +310,34 @@ export default {
   },
   data: () => ({
     tuningObjs,
-    MIDImap,
     isAuto:true,
     currentTuningIndex: 0,
-    bubbleOffset: 0,
+    layerWidth:0,
+    bubbleOffsetPercentage: 0,
     noteDisplay: "",
     noteDisplaySubscript: "",
     BubbleDisplay: "",
     btnNoActiveColor: "#e9e9e9",
     btnActiveColor: "red",
     BtnActiveArr: [false, false, false, false, false, false],
+    initalStateTimer:null,
+    stringIndex:-1,
+    bubbleWidth:0
   }),
+  watch:{
+    isAuto:function(newValue){
+        const {setBacktoInitalState} = this
+        setBacktoInitalState()
+        clearInterval(this.initalStateTimer)
+        this.initalStateTimer = null
+        if(newValue) this.initalStateTimer = setInterval(()=> this.setBacktoInitalState(), 5000) //newValue is true means switch from manual mode to auto mode
+        this.isAuto = newValue
+    }
+  },
   mounted() {
     const mediaDevicePromise = navigator.mediaDevices.getUserMedia({
       audio: true,
-    }); // ask and get the microphone permission from user
+    }); // ask the  microphone permission from user
     mediaDevicePromise.then((stream) => {
       const audioContext = new AudioContext();
       const audioSourceNode = audioContext.createMediaStreamSource(stream);
@@ -322,23 +352,20 @@ export default {
       const detector = pitchFinder.YIN({
         sampleRate: audioContext.sampleRate,
       });
-      setInterval(this.setBacktoInitalState, 5000); //set up a timer, when exceeding this time, the tuner will adjust to its inital state
-      audioScriptProcessorNode.addEventListener("audioprocess", (event) => {
+      this.layerWidth = this.$refs.layer.offsetWidth || 0
+      this.bubbleWidth = parseInt(this.$refs.bubble.width) || 0
+      audioScriptProcessorNode.addEventListener("audioprocess", (event)=>{
         const pitchFrequency = detector(event.inputBuffer.getChannelData(0));
-        if (typeof pitchFrequency === "number" && pitchFrequency < 1400) {
-          /**make sure the frequency detected is valid, because the pitch detection algorithm would return undefined if nothing dectected */
-          const note = this.mapFrequencytoNote(pitchFrequency);
-          const centsOffset = this.getCentsOffset(pitchFrequency);
-          this.displayNote(note);
-          this.controlBubble(centsOffset);
-          this.controlBtn(note);
-        }
+        const {isAuto,ManualComparison,AutoComparison} = this
+        if(!isAuto) ManualComparison(pitchFrequency)
+        else AutoComparison(pitchFrequency)
       });
+      if(this.isAuto) this.initalStateTimer = setInterval (()=> this.setBacktoInitalState(), 5000) //At auto mode, every 5 seconds get the user interface to its inital state
     });
   },
   methods: {
     setBacktoInitalState: function () {
-      this.bubbleOffset = 0;
+      this.bubbleOffsetPercentage = 0;
       this.BubbleDisplay = "";
       this.noteDisplaySubscript = "";
       this.noteDisplay = "";
@@ -358,24 +385,55 @@ export default {
       audioplayer.load();
       audioplayer.play();
     },
-    getNoteMIDI: function (frequency) {
+    ManualComparison:function(pitchFrequency){
+      const {stringIndex} = this
+      if(!(typeof pitchFrequency === "number" && pitchFrequency < 1400)) return 
+      if(stringIndex < 0 || !stringIndex === undefined) return
+          const {currentTuning,mapMIDInotetoMIDIvalue,mapFrequencyToMIDIvalue} = this
+          //notice : MIDInote is not simply a note like 'E', 'F', it should be a subnumber follow, like 'E3','A4'
+          const MIDInote = currentTuning.MIDInotes[stringIndex] //according to current stringIndex, get the corresponding MIDI note
+          const MIDIvalue = mapMIDInotetoMIDIvalue(MIDInote) //According to MIDInote, find its corresponding MIDI value, like 52 -> E2
+          //filter out the noise detected by dector
+          const pitchMIDIvalue = mapFrequencyToMIDIvalue(pitchFrequency)
+          //According to the frequency detected, transfer it to the MIDIvalue
+          const cents =  (pitchMIDIvalue - MIDIvalue) * 100
+          this.controlBubble(cents)
+          //input the note to map its corresponding MIDInotes value
+    },
+    AutoComparison:function(pitchFrequency){
+        if(!(typeof pitchFrequency === "number" && pitchFrequency < 1400)) return 
+        const {mapFrequencyToMIDIvalue,currentTuning,mapMIDInotetoMIDIvalue,findMostMatchingIndex,AutocontrolBtn,displayNote} = this
+        const currentTuningMIDIvalues = currentTuning.MIDInotes.map((note)=>mapMIDInotetoMIDIvalue(note))
+        const pitchMIDIvalue = mapFrequencyToMIDIvalue(pitchFrequency)
+        const mostMatchingIndex = findMostMatchingIndex(currentTuningMIDIvalues,pitchMIDIvalue)
+        const mostMatchingNote = currentTuning.MIDInotes[mostMatchingIndex]
+        AutocontrolBtn(mostMatchingNote)
+        displayNote(mostMatchingNote)
+    },
+    findMostMatchingIndex:function (arr,MIDIvalue){
+          let difference = -1000
+          let index = -1
+          arr.forEach((value,i)=>{
+            const diff = Math.abs(value - MIDIvalue)
+            if(diff < Math.abs(difference)){
+              difference = diff
+              index = i
+              }
+        })
+        return index
+    },
+    mapFrequencyToMIDIvalue: function (frequency) {
       /**
-       * Use 12 Equal Temperament to calculate MIDI code of a note corrsponding to the frequency
+       * Use 12 Equal Temperament to calculate MIDInotes code of a note corrsponding to the frequency
        */
-      const noteMIDI = 12 * Math.log2(frequency / MIDDLE_A);
-      return Math.round(noteMIDI) + SEMITONE;
+      let MIDIvalue = 12 * Math.log2(frequency / MIDDLE_A);
+      MIDIvalue = Math.round(MIDIvalue) + SEMITONE
+      return MIDIvalue
     },
-    getStandardFrequency: function (note) {
-      return MIDDLE_A * Math.pow(2, (note - SEMITONE) / 12);
-    },
-    getCentsOffset: function (frequency) {
-      const noteMIDI = this.getNoteMIDI(frequency);
-      const standardFrequency = this.getStandardFrequency(noteMIDI);
-      return Math.floor(1200 * Math.log2(frequency / standardFrequency));
-    },
-    mapFrequencytoNote: function (frequency) {
-      const noteMIDI = this.getNoteMIDI(frequency);
-      return MIDImap.get(noteMIDI);
+    mapMIDInotetoMIDIvalue:function(note){
+        let  MIDIvalue
+        for(let [key,value] of MIDImap) if(value === note) MIDIvalue = key
+        return MIDIvalue
     },
     displayNote(note) {
       if (note === undefined) return;
@@ -388,38 +446,60 @@ export default {
       }
     },
     controlBubble: function (centsOffset) {
+      const {layerWidth,bubbleWidth} = this
+      const MaxoffsetPercentage = ((layerWidth/bubbleWidth)/2) * 100
+      //suppose each 100 cents will cause 10% offset from origin position
+      let offsetPercentage = centsOffset/10
+      if(offsetPercentage  >= MaxoffsetPercentage || offsetPercentage  <= -MaxoffsetPercentage) offsetPercentage = MaxoffsetPercentage
+      this.bubbleOffsetPercentage = offsetPercentage
       const BubbleDisplay =
         centsOffset > 0 ? "High" : centsOffset == 0 ? "" : "low";
       this.BubbleDisplay = BubbleDisplay;
-      this.bubbleOffset = centsOffset;
     },
-    controlBtn: function (note) {
-      if (note === undefined || !this.isAuto) return;
+    AutocontrolBtn: function (note) {
       const {BtnActiveArr} = this;
-      const {MIDI} = this.currentTuning
-      switch (note) {
-        case MIDI[SIXTH_STRING_INDEX]:
+      const {MIDInotes} = this.currentTuning
+        if(!note) return
+        switch (note) {
+        case MIDInotes[SIXTH_STRING_INDEX]:
           BtnActiveArr[SIXTH_STRING_INDEX] = true;
+          setTimeout(()=>BtnActiveArr[SIXTH_STRING_INDEX] = false, 300)
           break;
-        case MIDI[FIFTH_STRING_INDEX]:
+        case MIDInotes[FIFTH_STRING_INDEX]:
           BtnActiveArr[FIFTH_STRING_INDEX] = true;
+          setTimeout(()=>BtnActiveArr[FIFTH_STRING_INDEX] = false, 300)
           break;
-        case MIDI[FOURTH_STRING_INDEX]:
+        case MIDInotes[FOURTH_STRING_INDEX]:
           BtnActiveArr[FOURTH_STRING_INDEX] = true;
+          setTimeout(()=>BtnActiveArr[FOURTH_STRING_INDEX] = false, 300)
           break;
-        case MIDI[THIRD_STRING_INDEX]:
+        case MIDInotes[THIRD_STRING_INDEX]:
           BtnActiveArr[THIRD_STRING_INDEX] = true;
+          setTimeout(()=>BtnActiveArr[THIRD_STRING_INDEX] = false, 300)
           break;
-        case MIDI[SECOND_STRING_INDEX]:
+        case MIDInotes[SECOND_STRING_INDEX]:
           BtnActiveArr[SECOND_STRING_INDEX] = true;
+          setTimeout(()=>BtnActiveArr[SECOND_STRING_INDEX] = false, 300)
           break;
-        case MIDI[FIRST_STRING_INDEX]:
+        case MIDInotes[FIRST_STRING_INDEX]:
           BtnActiveArr[FIRST_STRING_INDEX] = true;
+          setTimeout(()=>BtnActiveArr[FIRST_STRING_INDEX] = false, 300)
           break;
         default:
           break;
       }
+      
     },
+    ManualControlBtn(stringIndex){
+      const {BtnActiveArr,playAudio,currentTuning,displayNote} = this
+      if(stringIndex === undefined) return
+      for(let i =0;i<BtnActiveArr.length;i++)  BtnActiveArr[i] = false
+      //under the manual mode, be sure only one button will be actived 
+      BtnActiveArr[stringIndex] = true
+      displayNote(currentTuning.MIDInotes[stringIndex])
+      playAudio(stringIndex)
+      this.stringIndex = stringIndex
+    }
   },
 };
 </script>
