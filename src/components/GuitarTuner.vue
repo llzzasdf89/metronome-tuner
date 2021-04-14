@@ -376,7 +376,8 @@ export default {
       this.isAuto = newValue;
     },
     currentTuningIndex: function (newIndex) {
-      const { ManualControlBtn, stringIndex } = this;
+      const { ManualControlBtn, stringIndex, isAuto} = this;
+      if(isAuto) return this.currentTuningIndex = newIndex;
       ManualControlBtn(stringIndex);
       this.currentTuningIndex = newIndex;
     },
@@ -453,8 +454,7 @@ export default {
       //input the note to map its corresponding MIDInotes value
     },
     AutoComparison: function (pitchFrequency) {
-      if (!(typeof pitchFrequency === "number" && pitchFrequency < 1400))
-        return;
+      if (!(typeof pitchFrequency === "number" && pitchFrequency < 1400)) return;
       const {
         currentTuning,
         findMostMatchingIndex,
