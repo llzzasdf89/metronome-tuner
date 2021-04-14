@@ -8,14 +8,14 @@
           src="@/assets/speech-bubble.png"
           width="64px"
           height="64px"
-          :class="bubbleOffsetPercentage===0?'guitar_layer-dialogueAfter':'guitar_layer-dialogue'"
-          :style="{ transform: 'translateX(' + bubbleOffsetPercentage + '%'+')' }"
+          :class="(bubble.offsetPercentage>-20 && bubble.offsetPercentage<20)?'guitar_layer-dialogueAfter':'guitar_layer-dialogue'"
+          :style="{ transform: 'translateX(' + bubble.offsetPercentage + '%'+')' }"
           ref="bubble"
         >
           <div class="guitar_layer-dialogue-content">
-            {{ BubbleDisplay }}
+            {{ bubble.text }}
             <br />
-            {{ bubbleOffsetPercentage == 0 ? "" : bubbleOffsetPercentage*10 }}
+            {{ bubble.num }}
           </div>
         </v-img>
         <span>
@@ -304,11 +304,7 @@
 </style>
 <script>
 import tuningObjs from "@/assets/tuningObjs";
-import MIDImap from "@/assets/MIDItable";
 import TuningItem from "@/components/TuningItem";
-const MIDDLE_A = 440;
-const SEMITONE = 69;
-
 export default {
   name: "GuitarTuner",
   components:{
@@ -318,15 +314,19 @@ export default {
     tuningObjs,
     isAuto:true,
     currentTuningIndex: 0,
-    bubbleOffsetPercentage: 0,
     noteDisplay: "",
     noteDisplaySubscript: "",
-    BubbleDisplay: "",
+    bubble:{
+      text: "",
+      offsetPercentage: 0,
+      num:''
+    },
     btnNoActiveColor: "#e9e9e9",
     btnActiveColor: "red",
     BtnActiveArr: [false, false, false, false, false, false],
     initalStateTimer:null,
-    stringIndex:-1
+    stringIndex:-1,
+    AutoComparisonPitchFrequencyBuffer:[]
   }),
   computed:{
       currentTuningMIDIvalues:function(){
@@ -334,13 +334,15 @@ export default {
         return currentTuning.MIDInotes.map((note)=>mapMIDInotetoMIDIvalue(note))
       },
       currentTuning:function(){
+
         const {currentTuningIndex} = this
         return tuningObjs[currentTuningIndex]
       },
       MaxoffsetPercentage:function(){
         const layerWidth = parseInt(this.$refs.layer.offsetWidth) || 0
         const bubbleWidth = parseInt(this.$refs.bubble.width) || 0
-        return ((layerWidth/bubbleWidth)/2) * 100
+        const MaxoffsetPercentage = (((layerWidth/bubbleWidth)/2) * 100) - 100
+        return MaxoffsetPercentage
       }
   },
   watch:{
@@ -351,6 +353,11 @@ export default {
         this.initalStateTimer = null
         if(newValue) this.initalStateTimer = setInterval(()=> this.setBacktoInitalState(), 5000) //newValue is true means switch from manual mode to auto mode
         this.isAuto = newValue
+    },
+    currentTuningIndex:function (newIndex){
+      const {ManualControlBtn,stringIndex} = this
+      ManualControlBtn(stringIndex)
+      this.currentTuningIndex = newIndex
     }
   },
   mounted() {
@@ -382,8 +389,12 @@ export default {
   },
   methods: {
     setBacktoInitalState: function () {
-      this.bubbleOffsetPercentage = 0;
-      this.BubbleDisplay = "";
+      const {bubble} = this
+      bubble.offsetPercentage = 0;
+      bubble.BubbleDisplay = "";
+      bubble.num = ''
+      bubble.text=''
+      this.AutoComparisonPitchFrequencyBuffer = []
       this.noteDisplaySubscript = "";
       this.noteDisplay = "";
       this.BtnActiveArr = [false, false, false, false, false, false];
@@ -406,53 +417,45 @@ export default {
       const {stringIndex} = this
       if(!(typeof pitchFrequency === "number" && pitchFrequency < 1400)) return 
       if(stringIndex < 0 || !stringIndex === undefined) return
-          const {currentTuning,mapMIDInotetoMIDIvalue,mapFrequencyToMIDIvalue,controlBubble} = this
-          //notice : MIDInote is not simply a note like 'E', 'F', it should be a subnumber follow, like 'E3','A4'
-          const MIDInote = currentTuning.MIDInotes[stringIndex] //according to current stringIndex, get the corresponding MIDI note
-          const MIDIvalue = mapMIDInotetoMIDIvalue(MIDInote) //According to MIDInote, find its corresponding MIDI value, like 52 -> E2
-          //filter out the noise detected by dector
-          const pitchMIDIvalue = mapFrequencyToMIDIvalue(pitchFrequency)
-          //According to the frequency detected, transfer it to the MIDIvalue
-          const cents =  (pitchMIDIvalue - MIDIvalue) * 100
+          const {currentTuning,controlBubble} = this
+          const frequencies = currentTuning.frequencies
+          const currentStringFrequency = frequencies[stringIndex]
+          const cents = Math.floor(1200 * Math.log2(pitchFrequency/currentStringFrequency))
           controlBubble(cents)
           //input the note to map its corresponding MIDInotes value
     },
     AutoComparison:function(pitchFrequency){
         if(!(typeof pitchFrequency === "number" && pitchFrequency < 1400)) return 
-        const {mapFrequencyToMIDIvalue,currentTuning,mapMIDInotetoMIDIvalue,findMostMatchingIndex,AutocontrolBtn,displayNote,controlBubble,currentTuningMIDIvalues} = this
-        const pitchMIDIvalue = mapFrequencyToMIDIvalue(pitchFrequency)
-        const mostMatchingIndex = findMostMatchingIndex(currentTuningMIDIvalues,pitchMIDIvalue)
+        const {currentTuning,findMostMatchingIndex,displayNote,controlBubble,AutocontrolBtn,AutoComparisonPitchFrequencyBuffer} = this
+        AutoComparisonPitchFrequencyBuffer.push(pitchFrequency)
+        let pitchFrequencyMedian
+        if(AutoComparisonPitchFrequencyBuffer.length >= 5){
+          pitchFrequencyMedian = AutoComparisonPitchFrequencyBuffer[3]
+          this.AutoComparisonPitchFrequencyBuffer = []
+        }
+        const tuningFrequencies = currentTuning.frequencies
+        const mostMatchingIndex = findMostMatchingIndex(tuningFrequencies,pitchFrequencyMedian)
+        //According to current Frequency detected, map it to corresponding MIDI value and compare it with current Tuning MIDI values
         if(mostMatchingIndex<0) return
+        
+        const mostMatchingNoteFrequency = tuningFrequencies[mostMatchingIndex]
+        const cents = Math.floor(1200 * Math.log2(pitchFrequency/mostMatchingNoteFrequency))
         const mostMatchingNote = currentTuning.MIDInotes[mostMatchingIndex]
-        const cents = (pitchMIDIvalue - mapMIDInotetoMIDIvalue(mostMatchingNote)) * 100
         AutocontrolBtn(mostMatchingNote)
         displayNote(mostMatchingNote)
         controlBubble(cents)
     },
-    findMostMatchingIndex:function (arr,MIDIvalue){
+    findMostMatchingIndex:function (arr,pitchFrequency){
           let difference = -1000
           let index = -1
           arr.forEach((value,i)=>{
-            const diff = Math.abs(value - MIDIvalue)
+            const diff = Math.abs(value - pitchFrequency)
             if(diff < Math.abs(difference)){
               difference = diff
               index = i
               }
         })
         return index
-    },
-    mapFrequencyToMIDIvalue: function (frequency) {
-      /**
-       * Use 12 Equal Temperament to calculate MIDInotes code of a note corrsponding to the frequency
-       */
-      let MIDIvalue = 12 * Math.log2(frequency / MIDDLE_A);
-      MIDIvalue = Math.round(MIDIvalue) + SEMITONE
-      return MIDIvalue
-    },
-    mapMIDInotetoMIDIvalue:function(note){
-        let  MIDIvalue
-        for(let [key,value] of MIDImap) if(value === note) MIDIvalue = key
-        return MIDIvalue
     },
     displayNote(note) {
       if (note === undefined) return;
@@ -465,15 +468,13 @@ export default {
       }
     },
     controlBubble: function (centsOffset) {
-      const {MaxoffsetPercentage} = this
-      //suppose each 100 cents will cause 10% offset from origin position
-      if(!MaxoffsetPercentage || MaxoffsetPercentage <0) console.error('MaxoffsetPercentage getting error')
-      let offsetPercentage = centsOffset/10
-      if(offsetPercentage  >= MaxoffsetPercentage || offsetPercentage  <= -MaxoffsetPercentage) offsetPercentage = MaxoffsetPercentage
-      this.bubbleOffsetPercentage = offsetPercentage
-      const BubbleDisplay =
-        centsOffset > 0 ? "High" : centsOffset == 0 ? "" : "low";
-      this.BubbleDisplay = BubbleDisplay;
+      const {MaxoffsetPercentage,bubble} = this
+      if(!MaxoffsetPercentage || MaxoffsetPercentage <0) return console.error('MaxoffsetPercentage getting error')
+      let offsetPercentage = centsOffset
+      if(offsetPercentage  >= MaxoffsetPercentage || offsetPercentage  <= -MaxoffsetPercentage) offsetPercentage = Math.round(MaxoffsetPercentage)
+      bubble.offsetPercentage = offsetPercentage
+      bubble.text = centsOffset > 20 ? "High" : centsOffset < -20 ?"low":""
+      bubble.num = centsOffset > 20 || centsOffset < -20?centsOffset:''
     },
     AutocontrolBtn: function (note) {
       if(!note) return
