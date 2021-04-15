@@ -355,7 +355,6 @@ export default {
     BtnActiveArr: [false, false, false, false, false, false],
     initalStateTimer: null,
     stringIndex: -1,
-    AutoComparisonPitchFrequencyBuffer: [],
   }),
   computed: {
     currentTuningMIDIvalues: function () {
