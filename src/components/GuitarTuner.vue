@@ -433,7 +433,6 @@ export default {
       bubble.BubbleDisplay = "";
       bubble.num = "";
       bubble.text = "";
-      this.AutoComparisonPitchFrequencyBuffer = [];
       this.noteDisplaySubscript = "";
       this.noteDisplay = "";
       this.BtnActiveArr = [false, false, false, false, false, false];
