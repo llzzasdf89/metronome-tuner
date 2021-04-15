@@ -341,7 +341,7 @@ export default {
   },
   data: () => ({
     tuningObjs,
-    isAuto: true,
+    isAuto: false,
     currentTuningIndex: 0,
     noteDisplay: "",
     noteDisplaySubscript: "",
@@ -419,7 +419,6 @@ export default {
         if (!isAuto) return ManualComparison(pitchFrequency);
         AutoComparison(pitchFrequency);
       });
-      if (this.isAuto)
         this.initalStateTimer = setInterval(
           () => this.setBacktoInitalState(),
           5000
@@ -428,14 +427,17 @@ export default {
   },
   methods: {
     setBacktoInitalState: function () {
-      const { bubble } = this;
+      const { bubble, isAuto} = this;
       bubble.offsetPercentage = 0;
       bubble.BubbleDisplay = "";
       bubble.num = "";
       bubble.text = "";
-      this.noteDisplaySubscript = "";
-      this.noteDisplay = "";
-      this.BtnActiveArr = [false, false, false, false, false, false];
+    
+      if(isAuto){
+        this.BtnActiveArr = [false, false, false, false, false, false];
+        this.noteDisplaySubscript = "";
+        this.noteDisplay = "";
+        }
     },
     playAudio: function (stringIndex) {
       if (!Number.isInteger(stringIndex))

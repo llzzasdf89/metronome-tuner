@@ -135,6 +135,10 @@ export default {
 beforeDestroy(){
   this.stop() //if components(page) is switched, stop the audio and set back to initalState
 },
+mounted(){
+  const {subdivisionArr,activeMusicNote} = this
+  activeMusicNote(subdivisionArr[0])
+},
   data: () => ({
     taptempo, //tapTempo feature objects, encapsulates all the functions related to tapTempo.
     isPlaying: false, // whether the player is working
