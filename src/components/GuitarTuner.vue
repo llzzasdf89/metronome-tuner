@@ -380,9 +380,11 @@ export default {
       setBacktoInitalState();
       clearInterval(initalStateTimer);
       this.initalStateTimer = null;
+      if(newValue)
         this.initalStateTimer = setInterval(
           () => setBacktoInitalState(),
           5000)
+      else this.stringIndex = -1
       this.isAuto = newValue;
     },
     currentTuningIndex: function (newIndex) {
@@ -417,6 +419,7 @@ export default {
         if (!isAuto) return ManualComparison(pitchFrequency);
         AutoComparison(pitchFrequency);
       });
+      if(this.isAuto)
         this.initalStateTimer = setInterval(
           () => this.setBacktoInitalState(),
           5000
@@ -430,8 +433,8 @@ export default {
       bubble.BubbleDisplay = "";
       bubble.num = "";
       bubble.text = "";
+      this.BtnActiveArr = [false, false, false, false, false, false];
       if(isAuto){
-        this.BtnActiveArr = [false, false, false, false, false, false];
         this.noteDisplaySubscript = "";
         this.noteDisplay = "";
         }
