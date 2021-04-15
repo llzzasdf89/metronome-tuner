@@ -208,7 +208,10 @@ beforeDestroy(){
     play: function () {
       this.isPlaying = !this.isPlaying;
       if (!this.isPlaying) return this.stop();
-      if (!this.audioCtx) this.audioCtx = new AudioContext();
+      if (!this.audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext
+        this.audioCtx = new AudioContext()
+        }
       this.currentBeat = 0; // each time playing begins, count the beat from the first beat, but remember the first beat is 0, which is convinent as index for circleObj
       this.intervalID = setInterval(() => this.scheduler(), this.lookahead);
     },

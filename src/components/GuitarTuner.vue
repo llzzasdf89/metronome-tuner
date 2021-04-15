@@ -400,18 +400,19 @@ export default {
       audio: true,
     }); // ask the  microphone permission from user
     mediaDevicePromise.then((stream) => {
-      const audioContext = new AudioContext();
-      const audioSourceNode = audioContext.createMediaStreamSource(stream);
-      const audioScriptProcessorNode = audioContext.createScriptProcessor(
+      const audioContext = window.AudioContext || window.webkitAudioContext
+      const audioCtx = new audioContext()
+      const audioSourceNode = audioCtx.createMediaStreamSource(stream);
+      const audioScriptProcessorNode = audioCtx.createScriptProcessor(
         4096,
         1,
         1
       );
       audioSourceNode.connect(audioScriptProcessorNode);
-      audioScriptProcessorNode.connect(audioContext.destination);
+      audioScriptProcessorNode.connect(audioCtx.destination);
       const pitchFinder = this.$pitchfinder;
       const detector = pitchFinder.YIN({
-        sampleRate: audioContext.sampleRate,
+        sampleRate: audioCtx.sampleRate,
       });
       audioScriptProcessorNode.addEventListener("audioprocess", (event) => {
         const pitchFrequency = detector(event.inputBuffer.getChannelData(0));
@@ -474,18 +475,11 @@ export default {
         displayNote,
         controlBubble,
         AutocontrolBtn,
-        AutoComparisonPitchFrequencyBuffer,
       } = this;
-      AutoComparisonPitchFrequencyBuffer.push(pitchFrequency);
-      let pitchFrequencyMedian;
-      if (AutoComparisonPitchFrequencyBuffer.length < 5) return 
-      AutoComparisonPitchFrequencyBuffer.sort()
-      pitchFrequencyMedian = AutoComparisonPitchFrequencyBuffer[3];
-      this.AutoComparisonPitchFrequencyBuffer = [];
       const tuningFrequencies = currentTuning.frequencies;
       const mostMatchingIndex = findMostMatchingIndex(
         tuningFrequencies,
-        pitchFrequencyMedian
+        pitchFrequency
       );
       //According to current Frequency detected, map it to corresponding MIDI value and compare it with current Tuning MIDI values
       if (mostMatchingIndex < 0) return;
@@ -500,17 +494,22 @@ export default {
       controlBubble(cents);
     },
     findMostMatchingIndex: function (arr, pitchFrequency) {
+      /**
+       * According to the frequency detected, calculate the difference between expected tuning frequency and the current frequency
+       * Then pick the one with smallest difference, return the index
+       */
       let difference = -1000;
       let index = -1;
-      if(pitchFrequency <= arr[0] - 10) return index = 0
-      if(pitchFrequency >=arr[5] + 10) return index = 5
-      arr.forEach((value, i) => {
-        const diff = Math.abs(value - pitchFrequency);
+      //if the frequency is lower than the 6th string frequency of currentTuning or higher than the first string, directly return
+      if(pitchFrequency <= arr[0]) return index = 0
+      else if (pitchFrequency >= arr[5]) return index = 5
+      for(let i=0;i<arr.length;i++){
+        const diff = Math.abs(pitchFrequency - arr[i]);
         if (diff < Math.abs(difference)) {
           difference = diff;
-          index = i;
-        }
-      });
+          index = i
+      }
+      }
       return index;
     },
     displayNote(note) {
