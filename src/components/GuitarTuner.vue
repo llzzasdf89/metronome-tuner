@@ -106,16 +106,16 @@
       <v-col cols="4" align-self="center">
         <v-card outlined>
           <v-row>
-            <v-col cols="8" class="pa-5 v-card__title"> SELECT TUNING </v-col>
-            <v-col cols="4" class="d-flex justify-center">
+            <v-col sm=4 md=8 class="pa-5 v-card__title"> SELECT TUNING </v-col>
+            <v-col sm=8 md=4 class="d-flex justify-center">
               <v-switch
                 messages="auto"
                 color="green"
                 v-model="isAuto"
               ></v-switch>
             </v-col>
-          </v-row>
-          <v-list-item-group
+          <v-col cols=12>
+            <v-list-item-group
             color="indigo"
             mandatory
             v-model="currentTuningIndex"
@@ -127,12 +127,25 @@
               :TuningString="tuning.strings.join(' ')"
             />
           </v-list-item-group>
+          </v-col>
+          </v-row>
         </v-card>
       </v-col>
     </v-row>
   </v-container>
 </template>
 <style scoped>
+@media screen and (max-width : 1237px) {
+    .btn-toggle-3rd-string::before,
+  .btn-toggle-2nd-string::before,
+  .btn-toggle-1st-string::before,
+  .btn-toggle-4th-string::before,
+  .btn-toggle-5th-string::before,
+  .btn-toggle-6th-string::before {
+      display:none
+      }
+      
+  }
 .tuner-container {
   position: relative;
 }
@@ -515,11 +528,8 @@ export default {
       if (!MaxoffsetPercentage || MaxoffsetPercentage < 0)
         return console.error("MaxoffsetPercentage getting error");
       let offsetPercentage = centsOffset;
-      if (
-        offsetPercentage >= MaxoffsetPercentage ||
-        offsetPercentage <= -MaxoffsetPercentage
-      )
-        offsetPercentage = Math.round(MaxoffsetPercentage);
+      if ( offsetPercentage >= MaxoffsetPercentage )  offsetPercentage = Math.round(MaxoffsetPercentage);
+      else if(offsetPercentage <= -MaxoffsetPercentage) offsetPercentage = Math.round(-MaxoffsetPercentage)
       bubble.offsetPercentage = offsetPercentage;
       bubble.text = centsOffset > 20 ? "High" : centsOffset < -20 ? "low" : "";
       bubble.num = centsOffset > 20 || centsOffset < -20 ? centsOffset : "";
