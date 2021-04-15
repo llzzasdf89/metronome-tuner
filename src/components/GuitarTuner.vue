@@ -380,11 +380,9 @@ export default {
       setBacktoInitalState();
       clearInterval(initalStateTimer);
       this.initalStateTimer = null;
-      if (newValue)
         this.initalStateTimer = setInterval(
-          () => this.setBacktoInitalState(),
-          5000
-        ); //newValue is true means switch from manual mode to auto mode
+          () => setBacktoInitalState(),
+          5000)
       this.isAuto = newValue;
     },
     currentTuningIndex: function (newIndex) {
@@ -432,7 +430,6 @@ export default {
       bubble.BubbleDisplay = "";
       bubble.num = "";
       bubble.text = "";
-    
       if(isAuto){
         this.BtnActiveArr = [false, false, false, false, false, false];
         this.noteDisplaySubscript = "";
