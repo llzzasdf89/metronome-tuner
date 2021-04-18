@@ -5,7 +5,7 @@
       <v-col class="tuner-container-guitar_layer" cols="8" ref="layer">
         <hr />
         <v-img
-          src="@/assets/speech-bubble.png"
+          src="@/assets/img/speech-bubble.png"
           width="64px"
           height="64px"
           :class="
@@ -30,7 +30,7 @@
       </v-col>
       <v-col class="tuner-container-guitar" cols="8">
         <v-img
-          src="@/assets/guitar.png"
+          src="@/assets/img/guitar.png"
           width="568px"
           height="620px"
           class="ma-auto guitar-animation overflow-visible"
@@ -332,7 +332,7 @@
 }
 </style>
 <script>
-import tuningObjs from "@/assets/tuningObjs";
+import tuningObjs from "@/utils/constants/tuningObjs";
 import TuningItem from "@/components/TuningItem";
 export default {
   name: "GuitarTuner",
@@ -357,12 +357,6 @@ export default {
     stringIndex: -1,
   }),
   computed: {
-    currentTuningMIDIvalues: function () {
-      const { currentTuning, mapMIDInotetoMIDIvalue } = this;
-      return currentTuning.MIDInotes.map((note) =>
-        mapMIDInotetoMIDIvalue(note)
-      );
-    },
     currentTuning: function () {
       const { currentTuningIndex } = this;
       return tuningObjs[currentTuningIndex];
@@ -428,16 +422,15 @@ export default {
   },
   methods: {
     setBacktoInitalState: function () {
-      const { bubble, isAuto} = this;
+      const { bubble} = this;
       bubble.offsetPercentage = 0;
       bubble.BubbleDisplay = "";
       bubble.num = "";
       bubble.text = "";
       this.BtnActiveArr = [false, false, false, false, false, false];
-      if(isAuto){
         this.noteDisplaySubscript = "";
         this.noteDisplay = "";
-        }
+        
     },
     playAudio: function (stringIndex) {
       if (!Number.isInteger(stringIndex))
@@ -455,7 +448,7 @@ export default {
     },
     ManualComparison: function (pitchFrequency) {
       const { stringIndex } = this;
-      if (!(typeof pitchFrequency === "number" && pitchFrequency < 1400))
+      if (!(typeof pitchFrequency === "number" && pitchFrequency < 440))
         return;
       if (stringIndex < 0 || !stringIndex === undefined) return;
       const { currentTuning, controlBubble } = this;
@@ -468,7 +461,7 @@ export default {
       //input the note to map its corresponding MIDInotes value
     },
     AutoComparison: function (pitchFrequency) {
-      if (!(typeof pitchFrequency === "number" && pitchFrequency < 1400)) return;
+      if (!(typeof pitchFrequency === "number" && pitchFrequency < 440)) return;
       const {
         currentTuning,
         findMostMatchingIndex,

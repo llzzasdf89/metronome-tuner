@@ -116,8 +116,8 @@
   </v-card>
 </template>
 <script>
-import taptempo from "@/assets/taptempo.js";
-import { musicNotes } from "@/assets/musicnotes.js";
+import {tap} from "@/utils/taptempo.js";
+import { musicNotes } from "@/utils/constants/musicnotes.js";
 export default {
   name: "Metronome",
   computed: {
@@ -140,7 +140,6 @@ mounted(){
   activeMusicNote(subdivisionArr[0])
 },
   data: () => ({
-    taptempo, //tapTempo feature objects, encapsulates all the functions related to tapTempo.
     isPlaying: false, // whether the player is working
     upperNumeralArr: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], //User choose a upper numeral from this data container.
     lowerNumeralArr: [1, 2, 4, 8], //User choose a lower numeral from this data container.
@@ -180,7 +179,7 @@ mounted(){
   watch: {
     /**
      * 'Watch' property is used to observe some variables in 'data'
-     * If we declare variables inside this propety, then once a variable has changed the value, the callback function after declaration would be called.
+     * If we declare variables inside this propety, then once a variable has changed the value, the callback function would be called.
      */
     upperNumeral: function (newUpperNumeral) {
       /**
@@ -322,11 +321,8 @@ mounted(){
       }
     },
     testBPM: function () {
-      this.taptempo.tap();
-      if (this.taptempo.timesCache.length >= 2) {
-        const bpm = Math.round(this.taptempo.calculateBPM());
-        return (this.bpmValue = bpm);
-      }
+      const bpm = tap();
+      if(bpm >0) this.bpmValue = bpm
     },
     stop: function () {
       clearInterval(this.intervalID);

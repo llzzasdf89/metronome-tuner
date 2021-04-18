@@ -33,8 +33,8 @@
 </template>
 
 <script>
-import GuitarTuner from "./components/GuitarTuner";
-import Metronome from "./components/Metronome";
+import GuitarTuner from "./views/GuitarTuner";
+import Metronome from "./views/Metronome";
 export default {
   name: "layout",
   components: {
@@ -42,9 +42,9 @@ export default {
     Metronome,
   },
   data: () => ({
-    toolBarTitle: "Metronome and Guitar Tuner",
+    toolBarTitle: "Metronome",
     drawer: true, //control the status of drawer,
-    currentRoute: window.location.pathname,
+    currentRoute: 'Metronome'
   }),
   computed: {
     topHeight: function () {
