@@ -47,7 +47,7 @@
               }"
               v-html="currentTuning.strings[2]"
               @click="controlBtn(2)"
-              :disabled="isAuto"
+              
             >
             </v-btn>
             <v-btn
@@ -57,7 +57,7 @@
               }"
               v-html="currentTuning.strings[1]"
               @click="controlBtn(1)"
-              :disabled="isAuto"
+              
             >
             </v-btn>
             <v-btn
@@ -67,7 +67,7 @@
               }"
               v-html="currentTuning.strings[0]"
               @click="controlBtn(0)"
-              :disabled="isAuto"
+              
             >
             </v-btn>
             <v-btn
@@ -77,7 +77,7 @@
               }"
               v-html="currentTuning.strings[3]"
               @click="controlBtn(3)"
-              :disabled="isAuto"
+              
             >
             </v-btn>
             <v-btn
@@ -87,7 +87,7 @@
               }"
               v-html="currentTuning.strings[4]"
               @click="controlBtn(4)"
-              :disabled="isAuto"
+              
             >
             </v-btn>
             <v-btn
@@ -97,7 +97,7 @@
               }"
               v-html="currentTuning.strings[5]"
               @click="controlBtn(5)"
-              :disabled="isAuto"
+              
             >
             </v-btn>
           </v-btn-toggle>
@@ -105,15 +105,8 @@
       </v-col>
       <v-col cols="4" align-self="center">
         <v-card outlined>
+          <v-card-title>SELECT TUNING</v-card-title>
           <v-row>
-            <v-col sm=4 md=8 class="pa-5 v-card__title"> SELECT TUNING </v-col>
-            <v-col sm=8 md=4 class="d-flex justify-center">
-              <v-switch
-                messages="auto"
-                color="green"
-                v-model="isAuto"
-              ></v-switch>
-            </v-col>
           <v-col cols=12>
             <v-list-item-group
             color="indigo"
@@ -335,8 +328,7 @@
 import tuningObjs from "@/utils/constants/tuningObjs";
 import TuningItem from "@/components/TuningItem";
 import {updatePitchParameters} from '@/utils/pitchDetect'
-import {ManualCompare} from '@/utils/ManualCompare'
-import {autoCompare} from '@/utils/AutoCompare'
+import {pitchCompare} from '@/utils/pitchCompare'
 import {filterPitch} from '@/utils/pitchFilter'
 export default {
   name: "GuitarTuner",
@@ -345,7 +337,6 @@ export default {
   },
   data: () => ({
     tuningObjs,
-    isAuto: false,
     currentTuningIndex: 0,
     noteDisplay: "",
     noteDisplaySubscript: "",
@@ -377,36 +368,14 @@ export default {
     detectedPitchObj:function(newdetectedPitchObj){
         this.detectedPitchObj = newdetectedPitchObj
         const {pitch,clarity} = newdetectedPitchObj
-        const { isAuto,controlBtn,displayNote,controlBubble,currentTuning,stringIndex} = this;
-        const pitchAfterFiltered = filterPitch(pitch,clarity,isAuto)
+        const { controlBubble,currentTuning,stringIndex} = this;
+        const pitchAfterFiltered = filterPitch(pitch,clarity)
         if(!pitchAfterFiltered) return
-        if (!isAuto) {
-          const centsOffset = ManualCompare(pitchAfterFiltered,currentTuning,stringIndex)
-          if(centsOffset) controlBubble(centsOffset)
-          return 
-          }
-          const matchingRes = autoCompare(pitchAfterFiltered,currentTuning);
-          if(!matchingRes) return
-          controlBtn(matchingRes.mostMatchingIndex);
-          displayNote(currentTuning.MIDInotes[matchingRes.mostMatchingIndex]);
-          controlBubble(matchingRes.centsOffset);
-
-    },
-    isAuto: function (newValue) {
-      const { setBacktoInitalState,initalStateTimer } = this;
-      setBacktoInitalState();
-      clearInterval(initalStateTimer);
-      this.initalStateTimer = null;
-      if(newValue)
-        this.initalStateTimer = setInterval(
-          () => setBacktoInitalState(),
-          5000)
-      this.stringIndex = -1
-      this.isAuto = newValue;
+        const centsOffset = pitchCompare(pitchAfterFiltered,currentTuning,stringIndex)
+        if(centsOffset) controlBubble(centsOffset)
     },
     currentTuningIndex: function (newIndex) {
-      const { stringIndex, isAuto,controlBtn} = this;
-      if(isAuto) return
+      const { stringIndex, controlBtn} = this;
       controlBtn(stringIndex);
       this.currentTuningIndex = newIndex;
     },
@@ -422,9 +391,10 @@ export default {
       bubble.BubbleDisplay = "";
       bubble.num = "";
       bubble.text = "";
+      this.stringIndex = -1
       this.BtnActiveArr = [false, false, false, false, false, false];
-        this.noteDisplaySubscript = "";
-        this.noteDisplay = "";
+      this.noteDisplaySubscript = "";
+      this.noteDisplay = "";
     },
     updatePitch:function () {
     const {analyserNode,input,detector,sampleRate} = updatePitchParameters
@@ -472,16 +442,14 @@ export default {
       bubble.num = centsOffset > 20 || centsOffset < -20 ? centsOffset : "";
     },
     controlBtn:function(stringIndex){
-        const {isAuto,BtnActiveArr, playAudio, currentTuning, displayNote} = this
+        const {BtnActiveArr,displayNote,playAudio,currentTuning} = this
         if (stringIndex === undefined) return;
         for (let i = 0; i < BtnActiveArr.length; i++) BtnActiveArr[i] = false;
         //be sure only one button will be actived
         BtnActiveArr[stringIndex] = true;
-        if(!isAuto) {
-          displayNote(currentTuning.MIDInotes[stringIndex]);
+        displayNote(currentTuning.MIDInotes[stringIndex]);
           playAudio(stringIndex)
           this.stringIndex = stringIndex;
-        }
     }
   },
 };

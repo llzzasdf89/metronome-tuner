@@ -2,9 +2,9 @@ import tunningObjs from '@/utils/constants/tuningObjs'
 const noteBorder = []
 let cacheArr = []
 let diffArr = []
-function filterPitch(pitch,clarity,isAuto){
+function filterPitch(pitch,clarity){
     if(clarity < 0.95) return 0 
-    if(pitch > 440 || pitch <= 40) return 0 //generally when plucking the open strings, the frequency will not exceed such interval 
+    if(pitch > 440 || pitch <= 50) return 0 //generally when plucking the open strings, the frequency will not exceed such interval 
         cacheArr.push(pitch)
         if(cacheArr.length< 5) return 0 //If the cache container does not have 5 value to be calculated, directly return
         cacheArr.sort()
@@ -20,10 +20,8 @@ function filterPitch(pitch,clarity,isAuto){
             return 0
             }
         }
-        if(isAuto){
-            const flag = noteBorder.some((border)=>valueTobeCompared>=border[0] && valueTobeCompared <= border[1])
-            if(!flag) return 0
-        }
+        const flag = noteBorder.some((border)=>valueTobeCompared>=border[0] && valueTobeCompared <= border[1])
+        if(!flag) return 0
         cacheArr = []
         diffArr = []
     return valueTobeCompared
@@ -32,7 +30,7 @@ function initateNoteBorder(){
     tunningObjs.forEach ((tuning)=>{
         const frequencies = tuning.frequencies
         frequencies.forEach((frequency)=>{
-          noteBorder.push([frequency-10,frequency + 10])
+          noteBorder.push([frequency-20,frequency + 20])
         })
     })
 }
