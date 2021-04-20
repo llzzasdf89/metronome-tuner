@@ -46,7 +46,7 @@
                 background: BtnActiveArr[2] ? btnActiveColor : btnNoActiveColor,
               }"
               v-html="currentTuning.strings[2]"
-              @click="ManualControlBtn(2)"
+              @click="controlBtn(2)"
               :disabled="isAuto"
             >
             </v-btn>
@@ -56,7 +56,7 @@
                 background: BtnActiveArr[1] ? btnActiveColor : btnNoActiveColor,
               }"
               v-html="currentTuning.strings[1]"
-              @click="ManualControlBtn(1)"
+              @click="controlBtn(1)"
               :disabled="isAuto"
             >
             </v-btn>
@@ -66,7 +66,7 @@
                 background: BtnActiveArr[0] ? btnActiveColor : btnNoActiveColor,
               }"
               v-html="currentTuning.strings[0]"
-              @click="ManualControlBtn(0)"
+              @click="controlBtn(0)"
               :disabled="isAuto"
             >
             </v-btn>
@@ -76,7 +76,7 @@
                 background: BtnActiveArr[3] ? btnActiveColor : btnNoActiveColor,
               }"
               v-html="currentTuning.strings[3]"
-              @click="ManualControlBtn(3)"
+              @click="controlBtn(3)"
               :disabled="isAuto"
             >
             </v-btn>
@@ -86,7 +86,7 @@
                 background: BtnActiveArr[4] ? btnActiveColor : btnNoActiveColor,
               }"
               v-html="currentTuning.strings[4]"
-              @click="ManualControlBtn(4)"
+              @click="controlBtn(4)"
               :disabled="isAuto"
             >
             </v-btn>
@@ -96,7 +96,7 @@
                 background: BtnActiveArr[5] ? btnActiveColor : btnNoActiveColor,
               }"
               v-html="currentTuning.strings[5]"
-              @click="ManualControlBtn(5)"
+              @click="controlBtn(5)"
               :disabled="isAuto"
             >
             </v-btn>
@@ -334,6 +334,10 @@
 <script>
 import tuningObjs from "@/utils/constants/tuningObjs";
 import TuningItem from "@/components/TuningItem";
+import {updatePitchParameters} from '@/utils/pitchDetect'
+import {ManualCompare} from '@/utils/ManualCompare'
+import {autoCompare} from '@/utils/AutoCompare'
+import {filterPitch} from '@/utils/pitchFilter'
 export default {
   name: "GuitarTuner",
   components: {
@@ -355,6 +359,7 @@ export default {
     BtnActiveArr: [false, false, false, false, false, false],
     initalStateTimer: null,
     stringIndex: -1,
+    detectedPitchObj:null
   }),
   computed: {
     currentTuning: function () {
@@ -369,6 +374,24 @@ export default {
     },
   },
   watch: {
+    detectedPitchObj:function(newdetectedPitchObj){
+        this.detectedPitchObj = newdetectedPitchObj
+        const {pitch,clarity} = newdetectedPitchObj
+        const { isAuto,controlBtn,displayNote,controlBubble,currentTuning,stringIndex} = this;
+        const pitchAfterFiltered = filterPitch(pitch,clarity,isAuto)
+        if(!pitchAfterFiltered) return
+        if (!isAuto) {
+          const centsOffset = ManualCompare(pitchAfterFiltered,currentTuning,stringIndex)
+          if(centsOffset) controlBubble(centsOffset)
+          return 
+          }
+          const matchingRes = autoCompare(pitchAfterFiltered,currentTuning);
+          if(!matchingRes) return
+          controlBtn(matchingRes.mostMatchingIndex);
+          displayNote(currentTuning.MIDInotes[matchingRes.mostMatchingIndex]);
+          controlBubble(matchingRes.centsOffset);
+
+    },
     isAuto: function (newValue) {
       const { setBacktoInitalState,initalStateTimer } = this;
       setBacktoInitalState();
@@ -378,47 +401,19 @@ export default {
         this.initalStateTimer = setInterval(
           () => setBacktoInitalState(),
           5000)
-      else this.stringIndex = -1
+      this.stringIndex = -1
       this.isAuto = newValue;
     },
     currentTuningIndex: function (newIndex) {
-      const { ManualControlBtn, stringIndex, isAuto} = this;
-      if(isAuto) return this.currentTuningIndex = newIndex;
-      ManualControlBtn(stringIndex);
+      const { stringIndex, isAuto,controlBtn} = this;
+      if(isAuto) return
+      controlBtn(stringIndex);
       this.currentTuningIndex = newIndex;
     },
   },
   mounted() {
-    const mediaDevicePromise = navigator.mediaDevices.getUserMedia({
-      audio: true,
-    }); // ask the  microphone permission from user
-    mediaDevicePromise.then((stream) => {
-      const audioContext = window.AudioContext || window.webkitAudioContext
-      const audioCtx = new audioContext()
-      const audioSourceNode = audioCtx.createMediaStreamSource(stream);
-      const audioScriptProcessorNode = audioCtx.createScriptProcessor(
-        4096,
-        1,
-        1
-      );
-      audioSourceNode.connect(audioScriptProcessorNode);
-      audioScriptProcessorNode.connect(audioCtx.destination);
-      const pitchFinder = this.$pitchfinder;
-      const detector = pitchFinder.YIN({
-        sampleRate: audioCtx.sampleRate,
-      });
-      audioScriptProcessorNode.addEventListener("audioprocess", (event) => {
-        const pitchFrequency = detector(event.inputBuffer.getChannelData(0));
-        const { isAuto, ManualComparison, AutoComparison } = this;
-        if (!isAuto) return ManualComparison(pitchFrequency);
-        AutoComparison(pitchFrequency);
-      });
-      if(this.isAuto)
-        this.initalStateTimer = setInterval(
-          () => this.setBacktoInitalState(),
-          5000
-        ); //At auto mode, every 5 seconds get the user interface to its inital state
-    });
+      const {updatePitch} = this
+      updatePitch()
   },
   methods: {
     setBacktoInitalState: function () {
@@ -430,8 +425,17 @@ export default {
       this.BtnActiveArr = [false, false, false, false, false, false];
         this.noteDisplaySubscript = "";
         this.noteDisplay = "";
-        
     },
+    updatePitch:function () {
+    const {analyserNode,input,detector,sampleRate} = updatePitchParameters
+    requestAnimationFrame(this.updatePitch)
+    analyserNode.getFloatTimeDomainData(input);
+    const [pitch,clarity] = detector.findPitch(input, sampleRate);
+    this.detectedPitchObj = {
+      pitch,
+      clarity
+    }
+},
     playAudio: function (stringIndex) {
       if (!Number.isInteger(stringIndex))
         return console.err("The string Index is illegal");
@@ -446,66 +450,7 @@ export default {
       audioplayer.load();
       audioplayer.play();
     },
-    ManualComparison: function (pitchFrequency) {
-      const { stringIndex } = this;
-      if (!(typeof pitchFrequency === "number" && pitchFrequency < 440))
-        return;
-      if (stringIndex < 0 || !stringIndex === undefined) return;
-      const { currentTuning, controlBubble } = this;
-      const frequencies = currentTuning.frequencies;
-      const currentStringFrequency = frequencies[stringIndex];
-      const cents = Math.floor(
-        1200 * Math.log2(pitchFrequency / currentStringFrequency)
-      );
-      controlBubble(cents);
-      //input the note to map its corresponding MIDInotes value
-    },
-    AutoComparison: function (pitchFrequency) {
-      if (!(typeof pitchFrequency === "number" && pitchFrequency < 440)) return;
-      const {
-        currentTuning,
-        findMostMatchingIndex,
-        displayNote,
-        controlBubble,
-        AutocontrolBtn,
-      } = this;
-      const tuningFrequencies = currentTuning.frequencies;
-      const mostMatchingIndex = findMostMatchingIndex(
-        tuningFrequencies,
-        pitchFrequency
-      );
-      //According to current Frequency detected, map it to corresponding MIDI value and compare it with current Tuning MIDI values
-      if (mostMatchingIndex < 0) return;
-
-      const mostMatchingNoteFrequency = tuningFrequencies[mostMatchingIndex];
-      const cents = Math.floor(
-        1200 * Math.log2(pitchFrequency / mostMatchingNoteFrequency)
-      );
-      const mostMatchingNote = currentTuning.MIDInotes[mostMatchingIndex];
-      AutocontrolBtn(mostMatchingNote);
-      displayNote(mostMatchingNote);
-      controlBubble(cents);
-    },
-    findMostMatchingIndex: function (arr, pitchFrequency) {
-      /**
-       * According to the frequency detected, calculate the difference between expected tuning frequency and the current frequency
-       * Then pick the one with smallest difference, return the index
-       */
-      let difference = -1000;
-      let index = -1;
-      //if the frequency is lower than the 6th string frequency of currentTuning or higher than the first string, directly return
-      if(pitchFrequency <= arr[0]) return index = 0
-      else if (pitchFrequency >= arr[5]) return index = 5
-      for(let i=0;i<arr.length;i++){
-        const diff = Math.abs(pitchFrequency - arr[i]);
-        if (diff < Math.abs(difference)) {
-          difference = diff;
-          index = i
-      }
-      }
-      return index;
-    },
-    displayNote(note) {
+    displayNote:function(note) {
       if (!note) return;
       if (note.length === 2) {
         this.noteDisplay = note.charAt(0);
@@ -526,28 +471,18 @@ export default {
       bubble.text = centsOffset > 20 ? "High" : centsOffset < -20 ? "low" : "";
       bubble.num = centsOffset > 20 || centsOffset < -20 ? centsOffset : "";
     },
-    AutocontrolBtn: function (note) {
-      if (!note) return;
-      const { BtnActiveArr } = this;
-      const { MIDInotes } = this.currentTuning;
-      for (let i = 0; i < BtnActiveArr.length; i++) {
-        if (MIDInotes[i] === note) {
-          BtnActiveArr[i] = true;
-          continue;
+    controlBtn:function(stringIndex){
+        const {isAuto,BtnActiveArr, playAudio, currentTuning, displayNote} = this
+        if (stringIndex === undefined) return;
+        for (let i = 0; i < BtnActiveArr.length; i++) BtnActiveArr[i] = false;
+        //be sure only one button will be actived
+        BtnActiveArr[stringIndex] = true;
+        if(!isAuto) {
+          displayNote(currentTuning.MIDInotes[stringIndex]);
+          playAudio(stringIndex)
+          this.stringIndex = stringIndex;
         }
-        BtnActiveArr[i] = false;
-      }
-    },
-    ManualControlBtn(stringIndex) {
-      const { BtnActiveArr, playAudio, currentTuning, displayNote } = this;
-      if (stringIndex === undefined) return;
-      for (let i = 0; i < BtnActiveArr.length; i++) BtnActiveArr[i] = false;
-      //under the manual mode, be sure only one button will be actived
-      BtnActiveArr[stringIndex] = true;
-      displayNote(currentTuning.MIDInotes[stringIndex]);
-      playAudio(stringIndex);
-      this.stringIndex = stringIndex;
-    },
+    }
   },
 };
 </script>

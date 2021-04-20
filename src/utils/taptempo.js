@@ -1,3 +1,6 @@
+/**
+ * Encapsulate all the functions related to the tap tempo feature
+ */
 const timeout  = 3000
 let timesCache = []
 let previousTimeRecorded = null
