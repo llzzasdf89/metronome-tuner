@@ -44,10 +44,10 @@ export default {
   data: () => ({
     toolBarTitle: "Metronome",
     drawer: true, //control the status of drawer,
-    currentRoute: 'Metronome'
+    currentRoute: 'Metronome' //control the component to be mounted and showed
   }),
   computed: {
-    topHeight: function () {
+    topHeight: function () {//interactive value, to set the position of toolbar
       return this.$vuetify.application.top;
     },
   },

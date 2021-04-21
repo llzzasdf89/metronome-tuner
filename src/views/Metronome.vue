@@ -137,7 +137,8 @@ beforeDestroy(){
   this.stop() //if components(page) is switched, stop the audio and set back to initalState
 },
 mounted(){
-  initateScheduler(this)
+  initateScheduler(this) 
+  /** Since the value of BPM and lowerNumeral,upperNumeral are stored in Metronome component, pass the instance to scheduler to get the values */
   const {subdivisionArr,activeMusicNote} = this
   activeMusicNote(subdivisionArr[0])
 },
@@ -174,6 +175,7 @@ mounted(){
     /**
      * 'Watch' property is used to observe some variables in 'data'
      * If we declare variables inside this propety, then once a variable has changed the value, the callback function would be called.
+     * upperNumeral, lowerNumeral,bpmValue and subdivisionNote are quite essential for scheduler. Thus these values should be watched and once changed, pass them to scheduler.
      */
     upperNumeral: function (newUpperNumeral) {
       /**
@@ -227,6 +229,7 @@ mounted(){
       this.circleObj = circleObj;
     },
     controlCircle:function(circleIndexObj){
+      /**Receive parameters from scheduler to know which circle should be highlighted and which should be turned off */
         const {circleObj} = this
         const {CircleindextobeClosed , CircleindextobeActived} = circleIndexObj
         if(CircleindextobeClosed >=0 )circleObj[CircleindextobeClosed].isActive = false

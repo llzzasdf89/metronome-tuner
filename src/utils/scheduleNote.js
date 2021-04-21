@@ -71,6 +71,7 @@ function scheduleNote (beatNumber, time) {
     osc.stop(time + 0.03);
   }
 function initateScheduler(Vuecomponent){
+    /** Get relevant value needed from Vue component */
     const {controlCircle,currentSubdivisionNote,bpmValue,lowerNumeral,upperNumeral} = Vuecomponent
     notifyVueOfBeatChange = controlCircle
     setSubdivisionNote(currentSubdivisionNote)
@@ -127,6 +128,7 @@ function countBeat () {
       }
   }
   function beginScheduler(){
+    /** initate audioContext  */
     if (!audioCtx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext
       audioCtx = new AudioContext()

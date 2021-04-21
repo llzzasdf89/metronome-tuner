@@ -7,12 +7,19 @@ let previousTimeRecorded = null
 let difference = null
 let timer =  null
 function tap(){
+    /**
+     * Once user taped the button, begin timing, store it into a container called timesCache
+     */
     const currentTime = Date.now()
     if(previousTimeRecorded){
         difference = currentTime - previousTimeRecorded
         timesCache.push(difference)
     }
-    if (timesCache.length >= 2) {
+    if (timesCache.length >= 2) { 
+        /**
+         * Once have two more samples, calculate the average speed, convert it to bpmValue and notify the Vue component to
+         * do rending job.
+         *  */
         const bpm = Math.round(calculateBPM());
         return bpm
       }

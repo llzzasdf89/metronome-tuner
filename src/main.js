@@ -5,7 +5,7 @@ import 'roboto-fontface/css/roboto/roboto-fontface.css'
 import '@mdi/font/css/materialdesignicons.css'
 Vue.prototype.$getAudioplayer = function () {
   return document.getElementById('audioPlayer')
-}
+} //bind the audio player into the Vue prototype, so that in component it will be easy to use.
 Vue.config.productionTip = false
 new Vue({
   vuetify,

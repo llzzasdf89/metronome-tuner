@@ -1,3 +1,8 @@
+/**
+ * Encapsulated all the functions related to pitch filtering
+ * Since the pitch detected by pitch detector will be largely influenced by noises and harmonic of string. 
+ * Thus this module is encapsulated to filter out all the bias pitch or useless pitch
+ */
 import tunningObjs from '@/utils/constants/tuningObjs'
 const noteBorder = []
 let cacheArr = []
@@ -22,6 +27,7 @@ function filterPitch(pitch,clarity){
         }
         const flag = noteBorder.some((border)=>valueTobeCompared>=border[0] && valueTobeCompared <= border[1])
         if(!flag) return 0
+        console.log(pitch)
         cacheArr = []
         diffArr = []
     return valueTobeCompared
