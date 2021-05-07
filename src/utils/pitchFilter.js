@@ -25,14 +25,17 @@ function filterPitch(pitch,clarity){
             return 0
             }
         }
+        //So far we almost reduced the bias value in pitch cache Array
         const flag = noteBorder.some((border)=>valueTobeCompared>=border[0] && valueTobeCompared <= border[1])
+        /**Even after bias reduced, 
+         * sometimes the pitch detected is continuous noise, 
+         * so we should judge whether the pitch exists in frequency interval of an note*/ 
         if(!flag) return 0
-        console.log(pitch)
         cacheArr = []
         diffArr = []
     return valueTobeCompared
 }
-function initateNoteBorder(){
+function initateNoteFrequencyBorder(){
     tunningObjs.forEach ((tuning)=>{
         const frequencies = tuning.frequencies
         frequencies.forEach((frequency)=>{
@@ -40,5 +43,5 @@ function initateNoteBorder(){
         })
     })
 }
-initateNoteBorder()
+initateNoteFrequencyBorder()
 export {filterPitch}

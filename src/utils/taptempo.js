@@ -17,7 +17,7 @@ function tap(){
     }
     if (timesCache.length >= 2) { 
         /**
-         * Once have two more samples, calculate the average speed, convert it to bpmValue and notify the Vue component to
+         * Once buffer has two more samples, calculate the average speed, convert it to bpmValue and notify the Vue component to
          * do rending job.
          *  */
         const bpm = Math.round(calculateBPM());

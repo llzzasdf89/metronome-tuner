@@ -1,15 +1,20 @@
-import {PitchDetector} from 'pitchy'
+/**
+ * Encapsulates all the function relevant to initalize a pitch detector
+ */
+import {PitchDetector} from 'pitchy' //import the pitch detection algorithm
 let mediaDevicePromise
 let updatePitchParameters = null
 function updatePitchHandler (){
+  /**Handle the logic from requestPermission to pitch detector initate */
     try{
         mediaDevicePromise =  requestMicrophonePermission()
        }catch(err) {
-         console.error("request microphone permission error, please check the permission issue or refresh the webpage")
+         return console.error("request microphone permission error, please check the permission issue or refresh the webpage")
        }
-       if(!mediaDevicePromise) return
+       if(!mediaDevicePromise) return //means user did not allow the microphone permission
        mediaDevicePromise.then((stream)=>{      
          const res = initalizeAudioContextAndAnalyserNode(stream)
+         //Since initate pitch Detector needs the Analyser node and AudioContextNode, thus we should get these two nodes first.
          const pitchDetector  = initatePitchDetector(res.analyserNode)
          updatePitchParameters = {
            sampleRate : res.audioContext.sampleRate,
@@ -42,7 +47,8 @@ function initalizeAudioContextAndAnalyserNode(stream){
     }
 }
 function initatePitchDetector(analyserNode){
-    const detector = PitchDetector.forFloat32Array(analyserNode.fftSize); //forFloat32Array is an constructor function of pitchDector, for details please check documentation of pitchy.js
+    const detector = PitchDetector.forFloat32Array(analyserNode.fftSize); 
+    //forFloat32Array is an constructor of pitchDector, for details please check documentation of pitchy.js
     const input = new Float32Array(detector.inputLength);
    return {
      input,

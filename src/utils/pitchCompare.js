@@ -1,5 +1,5 @@
 /**
- * Encapsulate all the functions related to the Compare function under manual Mode
+ * Encapsulate all the functions related to the Compare function
  */
 function pitchCompare (pitchFrequency,currentTuning,stringIndex) {
   const frequencies = currentTuning.frequencies

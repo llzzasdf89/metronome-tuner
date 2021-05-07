@@ -366,10 +366,11 @@ export default {
   },
   watch: {
     detectedPitchObj:function(newdetectedPitchObj){
+        //watch the incoming updated pitch
         this.detectedPitchObj = newdetectedPitchObj
         const {pitch,clarity} = newdetectedPitchObj
         const { controlBubble,currentTuning,stringIndex} = this;
-        const pitchAfterFiltered = filterPitch(pitch,clarity)
+        const pitchAfterFiltered = filterPitch(pitch,clarity) //pass it to filter to figure out what pitch is needed.
         if(!pitchAfterFiltered) return
         const centsOffset = pitchCompare(pitchAfterFiltered,currentTuning,stringIndex)
         if(centsOffset) controlBubble(centsOffset)
@@ -398,10 +399,11 @@ export default {
     },
     updatePitch:function () {
     const {analyserNode,input,detector,sampleRate} = updatePitchParameters
-    requestAnimationFrame(this.updatePitch)
+    //from the pitch initazation module to obtain the parameters in need 
+    requestAnimationFrame(this.updatePitch) //recursively calls function to update pitch in real-time
     analyserNode.getFloatTimeDomainData(input);
     const [pitch,clarity] = detector.findPitch(input, sampleRate);
-    this.detectedPitchObj = {
+    this.detectedPitchObj = { //send the detected pitch and clarity data to global variable
       pitch,
       clarity
     }

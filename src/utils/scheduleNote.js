@@ -3,7 +3,6 @@
  */
 const lookahead = 25 //how soon a set Interval function to call scheduler
 const scheduleAheadTime = 0.1 //how long should our scheduler plan the next note ahead
-let notesInQueue = [] //Record each note to be played
 let bpm = -1
 let hitTime = 1
 let nextNoteTime = 0 //used to record how long a note should be playing, such things would be done in scheduler function
@@ -31,23 +30,26 @@ function scheduler() {
       nextNoteTime <
       audioCtx.currentTime + scheduleAheadTime
     ) {
-      scheduleNote(currentBeat, nextNoteTime);
+      scheduleNote(nextNoteTime);
       nextNote();
       const beatChangeIndexObj = countBeat()
-      notifyVueOfBeatChange(beatChangeIndexObj)
+      notifyVueOfBeatChange(beatChangeIndexObj) //notify view layer to update views.
     }
   }
 function nextNote() {
-    const secondsPerBeat = 60.0 / bpm; // Notice this picks up the CURRENT tempo value to calculate beat length.
-    //According to the time signature, calculate the next Note time
+    /**According to the bpm value calculate the next moment which note should be played */
+    const secondsPerBeat = 60.0 / bpm;
     nextNoteTime += secondsPerBeat * getSubdivisionHitTime();
   }
   function getSubdivisionHitTime() {
+    //According to the time signature, calculate the next Note time
+    //CorrespondingNum is equal to 1/note, for example a quarter note value is 1/4
     const { correspondingNum } =  SubdivisionNote;
     return correspondingNum * lowerNumeral;
+    //Lower Numeral is used to tell what note should take a beat. Like 4/4 then a quarter note corresponds to a beat
   }
-function scheduleNote (beatNumber, time) {
-    notesInQueue.push({ note: beatNumber, time });
+function scheduleNote (time) {
+    /**Call the audioContext Oscillator to create sound */
     const osc = audioCtx.createOscillator();
     const envelope = audioCtx.createGain();
     envelope.gain.value = 1;
@@ -61,7 +63,7 @@ function scheduleNote (beatNumber, time) {
      * If its value is 1, then it shows our subdivision beat is done, go to next beat of current bar.
      */
     const SubdivisionHitTime = getSubdivisionHitTime();
-    osc.frequency.value = hitTime === 0 ? 440 : 1000;
+    osc.frequency.value = hitTime === 0 ? 440 : 1000; //stress the first division beat
     hitTime += SubdivisionHitTime;
     if (hitTime > 1) hitTime = 0;
     //in case user switches from small notes to large notes, for example 8th -> 4th
@@ -92,7 +94,7 @@ function countBeat () {
     let res = {
         CircleindextobeClosed:-1,
         CircleindextobeActived:-1
-    }
+    } //record the circle indexs to be closed and actived. 
     if (hitTime !== 1) return res; //if there is division, its value should be 1 so that the metronome would go to next beat. If not, the division value should always be 1.
     if (upperNumeral === 1) {
         res.CircleindextobeActived = 0
@@ -114,7 +116,7 @@ function countBeat () {
       ++currentBeat;
       //if currentBeat is not approaching boundary, then we directly + 1
     }
-    hitTime = 0; //each time we count a beat, reset the subdivision record
+    hitTime = 0; //each time we count a beat, reset the subdivision value to 0
     return res
   }
   function stopScheduler() {
