@@ -400,13 +400,13 @@ export default {
     updatePitch:function () {
     const {analyserNode,input,detector,sampleRate} = updatePitchParameters
     //from the pitch initazation module to obtain the parameters in need 
-    requestAnimationFrame(this.updatePitch) //recursively calls function to update pitch in real-time
     analyserNode.getFloatTimeDomainData(input);
     const [pitch,clarity] = detector.findPitch(input, sampleRate);
     this.detectedPitchObj = { //send the detected pitch and clarity data to global variable
       pitch,
       clarity
     }
+    requestAnimationFrame(this.updatePitch) //recursively calls function to update pitch in real-time
 },
     playAudio: function (stringIndex) {
       if (!Number.isInteger(stringIndex))
